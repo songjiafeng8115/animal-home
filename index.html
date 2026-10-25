@@ -356,6 +356,15 @@ button{font-family:inherit;color:var(--ink)}
 .kid{position:relative;background:#fff;border:3px solid var(--ink);border-radius:16px;display:flex;flex-direction:column;align-items:center;padding:4px;font-size:18px}
 .kid svg{width:62px;height:62px}.kid b{font-size:18px}
 @media (max-height:560px) and (min-aspect-ratio:3/2){#clockHud{top:4px;left:4px;padding:2px 8px 2px 4px}#clockHud .ic{font-size:18px}#clockHud b{font-size:14px}#clockHud .lb{display:none}}
+.flytext{position:fixed;transform:translate(-50%,0);font-size:30px;font-weight:900;z-index:60;pointer-events:none;-webkit-text-stroke:5px #fff;paint-order:stroke;animation:flyt 1.3s ease-out forwards}
+@keyframes flyt{to{transform:translate(-50%,60px);opacity:0}}
+#clockHud .warn{font-size:13px;letter-spacing:-2px}
+.me{display:flex;align-items:center;gap:14px;background:#FFF3C4;border:3px solid var(--ink);border-radius:18px;padding:6px 14px;margin-bottom:12px;font-size:24px}
+.me .who{font-size:34px}.me b{font-size:26px}
+.kid .crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:26px;font-style:normal}
+.kid .rk{position:absolute;top:4px;left:8px;font-size:14px;font-weight:900;opacity:.6}
+.kid .fl{font-size:12px;letter-spacing:-2px;min-height:16px}
+.kid .md{position:absolute;top:2px;right:4px;font-size:20px}
 </style>
 </head>
 <body>
@@ -614,6 +623,7 @@ function animalArt(t,ci,o={}){
   if(CL&&CL.hat&&!(acc.head&&ACC[acc.head])) s+=`<g transform="translate(0 ${hy+10})">${CL.hat()}</g>`;
   if(acc.head&&ACC[acc.head]){const d=ACC[acc.head];s+=`<g transform="translate(${d.dx} ${hy+d.dy}) rotate(${d.rot||0})">${d.art()}</g>`;}
   if(o.label)s+=adultLabel(o.label,o.flip);
+  if(o.crown)s+=`<text x="0" y="${hy-(acc.head?52:2)}" text-anchor="middle" font-size="44" stroke="none">👑</text>`;
   return s;
 }
 
@@ -1038,7 +1048,7 @@ const canSeat=it=>it.k==='a'||(def(it)&&def(it).small);
 
 /* ================= 绘制 ================= */
 function artOf(it,opt={}){
-  if(it.k==='a') return {b:animalArt(it.t,it.c,{eyes:opt.eyes,acc:it.acc,seated:opt.seated,dirty:it.dirty,label:it.role==='adult'?it.who:null,flip:it.f})};
+  if(it.k==='a') return {b:animalArt(it.t,it.c,{eyes:opt.eyes,acc:it.acc,seated:opt.seated,dirty:it.dirty,label:it.role==='adult'?it.who:null,flip:it.f,crown:!!it.star})};
   const d=TH[it.t],col=d.colors[it.c%d.colors.length];
   let r=d.art(col,it,{night:state.night});if(typeof r==='string')r={b:r};
   if(!d.wall&&!d.floor&&!opt.seated){const w=r1(d.box[2]*.4);r.b=E(0,0,w,Math.max(8,r1(w*.12)),'rgba(91,74,85,.1)',NS)+r.b;}
@@ -1214,7 +1224,7 @@ function tap(it){
   const L=layout[it.id]||{x:it.x,y:it.y,S:1};
   const quiet=storyTap(it);
   if(it.k==='a'){lastAnimal=it.id;anim(it.id,'jump');ANIMAL_SND[it.t]();fx(L.x,L.y-150*L.S,'heart',5);
-    if(!it.role&&!story)setTimeout(()=>emote(it,'⭐'+(it.score??3)),350);
+    if(!it.role&&!story)setTimeout(()=>emote(it,'🌸'+(it.score??3)),350);
     if(!quiet)setTimeout(()=>talk(['an_'+it.t]),450);return;}
   if(!story){
     const dd=def(it),game=(HS&&(isHideSpot(it)||COVER.has(it.t)))||['maze','seek','serve','heal'].includes(dd.tap);
@@ -1254,6 +1264,7 @@ $('#cards').addEventListener('pointerdown',e=>{
 });
 function beginMove(){
   const it=drag.it;drag.moved=true;
+  if(it.k==='a'&&!it.role)playerDisturb(it);
   if(FLY[it.id]!=null){delete FLY[it.id];setFlyPose(it,false);const fb=BR[it.id];if(fb)fb.st='idle';}
   if(it.hidden){it.hidden=false;it.behind=null;if(HS){HS.list=HS.list.filter(x=>x!==it.id);HS.total--;if(HS.found>=HS.total)HS=null;seekHud();}}
   if(it.h){const L=layout[it.id];it.x=L.x;it.y=L.y;it.h=null;it.si=null;render();}
@@ -3011,16 +3022,14 @@ function assignTasks(ph,list){
 }
 function startPhase(ph,quiet){
   const t=nowS();
-  // 上一个时段表现好的小朋友，自己的星星 +1
-  if(curPh&&curPh.act!=='free')for(const it of kids()){const b=BR[it.id];
-    if(b&&b.task&&b.taskDone&&!b.wasNaughty){it.score=Math.min(99,(it.score??3)+1);const L=layout[it.id];if(L&&L.x>camX&&L.x<camX+viewW)fxText(L.x,L.y-180*L.S,'+1⭐','#FFB400');}}
-  curPh=ph;NAUGHTY.length=0;
+  if(ph.id==='breakfast'&&curPh)newDay();
+  curPh=ph;ph.t0=t;ph.dur=(ph.end-ph.start)/ph.rate;NAUGHTY.length=0;PS().strikes=0;
   // 叫醒 / 清掉上一个任务
   for(const it of items())if(it.k==='a'){
     const b=brain(it);
     if(b.sport)leaveSport(it);
     if(b.task&&b.task.seat&&it.h===b.task.seat.h&&ph.act!=='sleep'){b.st='seated';b.seatUntil=t+rnd(1,4);}
-    b.task=null;b.naughty=false;b.wasNaughty=false;b.res=null;
+    b.task=null;b.naughty=false;b.wasNaughty=false;b.res=null;b.late=false;b.rewarded=false;b.think=null;
     if(it.nap&&ph.act!=='sleep'){it.nap=false;}
   }
   for(const id in AM){AM[id].fetch=null;AM[id].napAt=null;}
@@ -3029,14 +3038,14 @@ function startPhase(ph,quiet){
   if(ph.act!=='free'){
     const list=kids().filter(i=>!(drag&&drag.it===i));
     // 一两个调皮鬼
-    const naughtyN=Math.min(list.length>3&&Math.random()<.7?1:0,list.length);
-    const shuffled=[...list].sort(()=>Math.random()-.5),bad=shuffled.slice(0,naughtyN);
-    for(const it of bad){const b=brain(it);b.naughty=true;b.wasNaughty=true;NAUGHTY.push({id:it.id,at:t+rnd(12,20),who:ph.who});}
+    const bad=pickNaughty(ph,list);
+    for(const it of bad){const b=brain(it);b.naughty=true;b.wasNaughty=true;NAUGHTY.push({id:it.id,stage:0,at:t+rnd(6,9),who:ph.who});}
     assignTasks(ph,list.filter(i=>!bad.includes(i)));
     if(night){for(const it of items())if(it.k==='a'&&it.role&&it.role!=='adult')it.nap=true;}
   }
   render();updateClock(true);
   if(!quiet&&!story){sfx.bell();if(ph.line)setTimeout(()=>say([ph.line]),900);}
+  if(!quiet&&ph.act==='sleep')setTimeout(daySummary,5200);
   save();
 }
 function schedStep(dt,t){
@@ -3046,6 +3055,9 @@ function schedStep(dt,t){
   state.clock=(state.clock+dt*ph.rate)%1440;
   if(t>clockSaveT){clockSaveT=t+10;updateClock();save();}
   adultStep(dt,t);
+  for(const n of NAUGHTY){const k=getItem(n.id),b=k&&BR[k.id];if(!b||!b.naughty)continue;
+    if(n.stage===0&&t>n.at)warnCall(n,k,ph);else if(n.stage===1&&n.at2&&t>n.at2)n.stage=2;}
+  thinkStep(t);
   // 体育课：跟着哨子一起跳
   if(ph.act==='pe'&&t>peBeat){
     peBeat=t+1.3;peN++;
@@ -3063,25 +3075,25 @@ function taskStep(it,b,dt,t){
   const k=b.task,tgt=k.seat?getItem(k.seat.h):k.spot,far=tgt?Math.abs(tgt.x-it.x):0;
   const sp=LIFE[it.t].speed*(far>3000?5:far>1200?3.2:2.2); // 路远就跑快一点
   if(k.act==='sleep'&&k.inPlace){
-    if(!it.nap){if(it.h){getOff(it);}it.nap=true;b.taskDone=true;setWalk(it,false);refresh(it);}
+    if(!it.nap){if(it.h){getOff(it);}it.nap=true;b.taskDone=true;onArrive(it,b);setWalk(it,false);refresh(it);}
     return;
   }
   if(k.seat){
     const h=getItem(k.seat.h);
     if(!h){k.seat=null;k.spot={x:it.x,y:it.y};return;}
-    if(it.h===h.id){if(!b.taskDone){b.taskDone=true;if(k.act==='sleep'&&!it.nap){it.nap=true;refresh(it);}}return;}
+    if(it.h===h.id){if(!b.taskDone){b.taskDone=true;onArrive(it,b);if(k.act==='sleep'&&!it.nap){it.nap=true;refresh(it);}}return;}
     const occ=items().find(o=>o.h===h.id&&o.si===k.seat.i&&o!==it);
     if(occ&&BR[occ.id]&&BR[occ.id].task&&!(BR[occ.id].task.seat&&BR[occ.id].task.seat.h===h.id&&BR[occ.id].task.seat.i===k.seat.i)){moveToward(it,h.x,clampY(it,h.y+60),dt,sp);return;}
     if(occ){k.seat=null;k.spot={x:clamp(h.x+rnd(-200,200),60,WORLD_W()-60),y:clampY(it,h.y+60)};return;}
     if(it.h)getOff(it);
     const p=seatPos(h,k.seat.i),hS=h.s*depth(h),tx=p.x,ty=clampY(it,h.y+18*hS);
-    if(near(it,tx,ty)){it.h=h.id;it.si=k.seat.i;it.auto=true;b.st='seated';b.seatUntil=1e9;b.taskDone=true;setWalk(it,false);if(k.act==='sleep')it.nap=true;refresh(it);anim(it.id,'hop');return;}
+    if(near(it,tx,ty)){it.h=h.id;it.si=k.seat.i;it.auto=true;b.st='seated';b.seatUntil=1e9;b.taskDone=true;onArrive(it,b);setWalk(it,false);if(k.act==='sleep')it.nap=true;refresh(it);anim(it.id,'hop');return;}
     moveToward(it,tx,ty,dt,sp);return;
   }
   if(k.spot){
     if(it.h){getOff(it);return;}
     if(near(it,k.spot.x,k.spot.y)){
-      if(!b.taskDone){b.taskDone=true;setWalk(it,false);if(k.act==='sleep'){it.nap=true;refresh(it);}}
+      if(!b.taskDone){b.taskDone=true;onArrive(it,b);setWalk(it,false);if(k.act==='sleep'){it.nap=true;refresh(it);}}
       if(k.act==='eat'&&Math.random()<dt*.12)emote(it,['😋','🍚','🥛'][Math.random()*3|0]);
       if(k.act==='class'&&Math.random()<dt*.06)emote(it,['✏️','🙋','📖'][Math.random()*3|0]);
       return;
@@ -3126,7 +3138,7 @@ function adultStep(dt,t){
     if(a.role!=='adult')continue;
     const m=AM[a.id]||(AM[a.id]={wt:0});
     // 该去管调皮鬼了
-    if(!m.fetch){const n=NAUGHTY.find(n=>n.who===a.who&&t>n.at&&BR[n.id]&&BR[n.id].naughty&&!n.taken);
+    if(!m.fetch){const n=NAUGHTY.find(n=>n.who===a.who&&n.stage===2&&BR[n.id]&&BR[n.id].naughty&&!n.taken);
       if(n){n.taken=true;m.fetch=n.id;if(a.nap){a.nap=false;refresh(a);}}}
     if(m.fetch){
       const k=getItem(m.fetch),kb=k&&BR[k.id];
@@ -3144,20 +3156,12 @@ function adultStep(dt,t){
     moveToward(a,clamp(goal.x,60,WORLD_W()-60),goal.y,dt,170);
   }
 }
-function scold(a,k){
-  const b=brain(k);b.naughty=false;
-  k.score=Math.max(0,(k.score??3)-1);
-  const L=layout[k.id]||{x:k.x,y:k.y,S:1},vis=L.x>camX-200&&L.x<camX+viewW+200;
-  if(vis){fxText(L.x,L.y-190*L.S,'-1⭐','#FF5A5A');emote(k,'😢');setTimeout(()=>emote(a,'😠'),300);anim(a.id,'jump');say(['scold_'+a.who]);}
-  if(curPh&&curPh.act!=='free')assignTasks(curPh,[k]);
-  save();
-}
 // 孩子把调皮鬼送到该去的地方：算帮了忙
 function checkHelp(it){
   const b=BR[it.id];if(!b||!b.naughty||!curPh||curPh.act==='free')return;
   const ok=curPh.act==='sleep'?(it.h&&def(getItem(it.h)).seats[it.si].m==='sleep'):({eat:['kitchen','pretend','school','living'],class:['classroom','school','play'],pe:['school','play','maze']}[curPh.act]||[curPh.room]).includes(ROOMS[segOf(it)].id);
   if(!ok)return;
-  b.naughty=false;b.wasNaughty=false;assignTasks(curPh,[it]);
+  b.naughty=false;b.late=true;assignTasks(curPh,[it]);
   for(const id in AM)if(AM[id].fetch===it.id)AM[id].fetch=null;
   addStars(1,$('#clockHud'));sfx.cheer();say(['thanks_help']);
 }
@@ -3165,7 +3169,9 @@ function checkHelp(it){
 /* ================= 小时钟 / 光荣榜 ================= */
 function updateClock(bump){
   const ph=curPh||phaseAt(state.clock),el=$('#clockHud');
-  el.innerHTML=`<span class="ic">${ph.ic}</span><b>${fmtClock(state.clock)}</b><span class="lb">${ph.n}</span>`;
+  const st=ph.act!=='free'?Math.min(3,PS().strikes||0):0;
+  el.innerHTML=`<span class="ic">${ph.ic}</span><b>${fmtClock(state.clock)}</b><span class="lb">${ph.n}</span>`
+    +(st?`<span class="warn">${'🟡'.repeat(st)}${'⚪'.repeat(3-st)}</span>`:'');
   if(bump){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
 }
 setInterval(()=>{if(!document.hidden)updateClock();},1000);
@@ -3176,14 +3182,122 @@ function fxText(x,y,text,col){
 }
 function openBoard(){
   stopVO();
-  const list=kids().sort((a,b)=>(b.score??3)-(a.score??3));
+  const list=kids().sort((a,b)=>(b.score??3)-(a.score??3)),P=PS();
   $('#boardBody').innerHTML=`<div class="sched">${PHASES.map(p=>`<span class="${p===curPh?'on':''}">${p.ic}<b>${fmtClock(p.start%1440)}</b></span>`).join('')}</div>`
-    +`<div class="kids">${list.map((k,i)=>`<div class="kid">${i<3?['🥇','🥈','🥉'][i]:''}${thumb('animal',k.t)}<b>⭐${k.score??3}</b></div>`).join('')}</div>`;
+    +`<div class="me"><span class="who">👧</span><b>⭐${state.coins||0}</b><span>${P.good?'😊👍':'🟡'.repeat(Math.min(3,P.strikes||1))}</span></div>`
+    +`<div class="kids">${list.map((k,i)=>`<div class="kid">${k.star?'<i class="crown">👑</i>':''}<span class="rk">${i+1}</span>${thumb('animal',k.t)}`
+      +`<div class="fl">${'🌸'.repeat(Math.min(k.today||0,5))||'&nbsp;'}</div><b>🌸${k.score??3}</b><span class="md">${medalOf(k.score??3)}</span></div>`).join('')}</div>`;
   $('#board').hidden=false;sfx.page();say(['ui_board']);
 }
 $('#clockHud').onclick=openBoard;
 $('#boardClose').onclick=()=>{$('#board').hidden=true;stopVO();};
 
+
+
+/* ================= 奖惩规则 =================
+   ⭐ 星星：宝宝自己的（商店用）    🌸 小红花：小动物的表现（光荣榜）
+   小动物：按时到位 +1🌸；一整天没被批评睡前 +1🌸；当天最多的是“今日小明星”👑
+   调皮三级：① 大人叫名字提醒（不扣） ② 走过去批评 -1🌸 ③ 同一天再犯：去小板凳上想一想
+   宝宝：帮调皮鬼回去 +1⭐；一整天没打扰作息 +1⭐；打扰作息先提醒两次，同一时段第三次才 -1⭐
+*/
+// 每个小动物在不同时段有多爱调皮（被批评过的当天会乖很多）
+const TEMPER={fox:{class:.45,pe:.1,eat:.1,sleep:.15},dog:{class:.3,eat:.05,sleep:.1},cat:{breakfast:.45,pe:.2,sleep:.05},
+  bunny:{sleep:.45,class:.1},pig:{pe:.4,eat:.02},chick:{class:.25,sleep:.2},frog:{eat:.25,class:.1},bear:{breakfast:.35,pe:.25},panda:{pe:.15,class:.1,sleep:.05}};
+const MAX_PEN_DAY=3;
+const PS=()=>state.player||(state.player={strikes:0,good:true,penPh:null});
+const medalOf=n=>n>=50?'🥇':n>=25?'🥈':n>=10?'🥉':'';
+const temperOf=(it,ph)=>{const t=TEMPER[it.t]||{};return (t[ph.id]??t[ph.act]??.05)*(it.warns?.35:1);};
+function newDay(){
+  for(const k of kids()){k.today=0;k.warns=0;k.pen=0;}
+  const P=PS();P.good=true;P.strikes=0;P.penPh=null;
+}
+function pickNaughty(ph,list){
+  const bad=[];
+  for(const it of [...list].sort(()=>Math.random()-.5)){if(bad.length>=2)break;if(Math.random()<temperOf(it,ph))bad.push(it);}
+  return bad;
+}
+// 到位了：按时的奖一朵小红花
+function onArrive(it,b){
+  if(b.rewarded||!b.task||b.task.act==='think'||!curPh)return;b.rewarded=true;
+  if(b.late)return;
+  if(nowS()-curPh.t0>curPh.dur*.45)return;
+  it.today=(it.today||0)+1;it.score=Math.min(999,(it.score??3)+1);
+  const L=layout[it.id];
+  if(L&&L.x>camX&&L.x<camX+viewW){fxText(L.x,L.y-190*L.S,'+1🌸','#FF6F9C');if(!VOX.res&&Math.random()<.3&&curPh.who)say(['good_'+curPh.who]);}
+}
+// 第一级：叫名字提醒
+function warnCall(n,k,ph){
+  n.stage=1;
+  const a=items().find(i=>i.role==='adult'&&i.who===n.who),L=layout[k.id];
+  const vis=(L&&L.x>camX-300&&L.x<camX+viewW+300)||(a&&a.x>camX-300&&a.x<camX+viewW+300);
+  emote(k,'🟡');
+  if(vis&&!story)say(['nm_'+n.who+'_'+k.t,'warn_'+ph.act]);
+  if(Math.random()<.5){ // 一叫就听话了：不扣，但也不奖
+    setTimeout(()=>{const b=BR[k.id];if(!b||!b.naughty||curPh!==ph)return;b.naughty=false;b.late=true;assignTasks(ph,[k]);emote(k,'🙇');},1800);
+  }else n.at2=nowS()+rnd(9,13);
+}
+// 第二级：走过去批评；第三级：小板凳上想一想
+function scold(a,k){
+  const b=brain(k);b.naughty=false;b.late=true;
+  k.warns=(k.warns||0)+1;
+  const pen=(k.pen||0)<MAX_PEN_DAY&&(k.score??3)>0;
+  if(pen){k.score=Math.max(0,(k.score??3)-1);k.pen=(k.pen||0)+1;}
+  const L=layout[k.id]||{x:k.x,y:k.y,S:1},vis=L.x>camX-200&&L.x<camX+viewW+200;
+  if(vis){fxText(L.x,L.y-190*L.S,pen?'-1🌸':'🟡','#FF5A5A');emote(k,'😢');setTimeout(()=>emote(a,'😠'),300);anim(a.id,'jump');}
+  if(k.warns>=2&&curPh&&curPh.act!=='free'){
+    const side=a.x<k.x?1:-1;
+    b.task={act:'think',spot:{x:clamp(a.x+side*170*a.s*depth(a),60,WORLD_W()-60),y:clampY(k,a.y+30)}};b.taskDone=false;b.rewarded=false;
+    b.think={until:nowS()+18,who:a.who};
+    if(vis)say(['scold_'+a.who,'think_'+a.who]);
+  }else{
+    if(vis)say(['scold_'+a.who]);
+    if(curPh&&curPh.act!=='free')assignTasks(curPh,[k]);
+  }
+  save();
+}
+function thinkStep(t){
+  for(const k of kids()){const b=BR[k.id];if(!b||!b.think)continue;
+    if(b.taskDone&&Math.random()<.02)emote(k,'💭');
+    if(t>b.think.until){
+      const who=b.think.who;b.think=null;
+      const L=layout[k.id],vis=L&&L.x>camX-200&&L.x<camX+viewW+200;
+      if(vis)say(['forgive_'+who]);anim(k.id,'hop');
+      if(curPh&&curPh.act!=='free')assignTasks(curPh,[k]);else b.task=null;
+    }
+  }
+}
+// 宝宝打扰了作息（把正在吃饭/上课/睡觉的小朋友拖走）
+function playerDisturb(it){
+  const b=BR[it.id];
+  if(!curPh||curPh.act==='free'||story||!b||!b.task||b.naughty||b.task.act==='think')return;
+  const P=PS();P.strikes=(P.strikes||0)+1;P.good=false;updateClock(true);
+  const who=curPh.who||'mom';
+  if(P.strikes>=3&&P.penPh!==curPh.id){
+    P.penPh=curPh.id;
+    if((state.coins||0)>0){state.coins--;save();updateCoins(true);floatDom($('#bShop'),'-1⭐','#FF5A5A');}
+    say(['ppen_'+who]);
+  }else if(P.strikes<3)say(['remind_'+who]);
+  save();
+}
+function floatDom(el,text,col){
+  if(!el)return;const r=el.getBoundingClientRect(),d=document.createElement('div');
+  d.className='flytext';d.textContent=text;d.style.color=col;d.style.left=r.left+r.width/2+'px';d.style.top=r.bottom+'px';
+  document.body.appendChild(d);setTimeout(()=>d.remove(),1400);
+}
+// 睡前总结：今日小明星、乖宝宝奖
+function daySummary(){
+  const ks=kids();
+  for(const k of ks)if(!k.warns){k.score=(k.score??3)+1;k.today=(k.today||0)+1;}
+  const best=Math.max(0,...ks.map(k=>k.today||0)),tops=ks.filter(k=>(k.today||0)===best&&best>=2);
+  ks.forEach(k=>{k.star=false;});
+  const star=tops.length?tops[Math.random()*tops.length|0]:null;
+  const lines=[];
+  if(star){star.star=true;lines.push('star_today','nm_dad_'+star.t);}
+  if(PS().good){addStars(1,$('#clockHud'));lines.push('player_good');}
+  render();save();
+  if(lines.length&&!story)say(lines);
+  if(star){const L=layout[star.id];if(L)fx(L.x,L.y-200*L.S,'star',12);}
+}
 
 /* ================= 每个小朋友自己的床、餐椅、课桌 ================= */
 const KIDS=['cat','dog','bunny','bear','panda','chick','pig','frog','fox'];
