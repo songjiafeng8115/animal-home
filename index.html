@@ -365,6 +365,10 @@ button{font-family:inherit;color:var(--ink)}
 .kid .rk{position:absolute;top:4px;left:8px;font-size:14px;font-weight:900;opacity:.6}
 .kid .fl{font-size:12px;letter-spacing:-2px;min-height:16px}
 .kid .md{position:absolute;top:2px;right:4px;font-size:20px}
+.chalkin{animation:chalkin .6s ease-out}
+@keyframes chalkin{from{opacity:0}}
+.kid .cup{position:absolute;bottom:2px;right:4px;font-size:12px;font-weight:900}
+.nextm{font-size:15px;font-weight:800;margin:-4px 0 10px;opacity:.8}
 </style>
 </head>
 <body>
@@ -417,7 +421,7 @@ button{font-family:inherit;color:var(--ink)}
           <feMerge><feMergeNode in="o2"/><feMergeNode in="o1"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
       </defs>
-      <g id="bg"></g><g id="scoreL"></g>
+      <g id="bg"></g><g id="chalkL"></g><g id="scoreL"></g>
       <g id="world" stroke="#5B4A55" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
         <g id="floorL"></g><g id="wallL"></g><g id="mainL"></g>
       </g>
@@ -876,15 +880,15 @@ function playBG(n,kind='play'){
       +`<path d="M 640 900 Q 720 700 880 600 Q 990 530 1100 480 L 1170 480 Q 1070 540 990 620 Q 860 730 900 900 Z" fill="#F3DFB4"/>`
       +tufts([[90,560],[330,640],[220,820],[600,560],[1150,700],[1300,600],[1480,760],[460,860],[1040,860],[760,520]]);
   }else if(kind==='soccer'){
-    s+=`<rect y="${FL}" width="1600" height="${900-FL}" fill="#8ED07A"/>`;
-    for(let x=0;x<1600;x+=200)s+=`<rect x="${x}" y="${FL}" width="100" height="${900-FL}" fill="#99D886"/>`;
+    s+=`<rect y="380" width="1600" height="520" fill="#8ED07A"/>`;
+    for(let x=0;x<1600;x+=200)s+=`<rect x="${x}" y="380" width="100" height="520" fill="#99D886"/>`;
     const W='#FFFFFF';
     s+=`<rect x="80" y="600" width="1440" height="280" fill="none" stroke="${W}" stroke-width="6"/>`
       +`<path d="M 800 600 L 800 880" stroke="${W}" stroke-width="6"/>`+E(800,740,130,50,'none',`stroke="${W}" stroke-width="6"`)+C(800,740,6,W)
       +GOALS_LOCAL.map(g=>`<rect x="${g.x-160}" y="600" width="320" height="80" fill="none" stroke="${W}" stroke-width="6"/>`+goalArt(g.x)).join('')
       +tufts([[60,540],[1540,550],[420,860],[1180,870]]);
   }else if(kind==='basket'){
-    s+=`<rect y="${FL}" width="1600" height="${900-FL}" fill="#A6DE8C"/><rect y="${FL+40}" width="1600" height="${860-FL}" fill="#E9A66C"/>`;
+    s+=`<rect y="380" width="1600" height="520" fill="#A6DE8C"/><rect y="${FL+40}" width="1600" height="${860-FL}" fill="#E9A66C"/>`;
     for(let y=FL+70;y<900;y+=44)s+=`<rect y="${y}" width="1600" height="3" fill="#DD965A"/>`;
     const W='#FFFFFF';
     s+=`<rect x="80" y="560" width="1440" height="320" fill="none" stroke="${W}" stroke-width="6"/><path d="M 800 560 L 800 880" stroke="${W}" stroke-width="6"/>`
@@ -936,10 +940,7 @@ function schoolBuilding(){
 function classroomExtra(){
   return R(120,140,240,200,16,'#FFFFFF')+R(136,156,208,168,8,'#BFE6FF','stroke-width="3"')+L('M 240 156 L 240 324',4,'#fff')+cloudNS(200,220,.5)
     +R(440,110,720,260,18,'#C99A6E')+R(462,130,676,214,8,'#3E6B4E')
-    +`<g stroke="none" fill="#F4F4EE" font-weight="900"><text x="520" y="220" font-size="70" font-family="Comic Sans MS,Chalkboard SE,sans-serif">ABC</text>`
-    +`<text x="540" y="310" font-size="54" font-family="Comic Sans MS,Chalkboard SE,sans-serif">1 2 3</text></g>`
-    +C(990,210,40,'none','stroke="#FFE07A" stroke-width="6"')+[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;return L(`M ${r1(990+Math.cos(r)*52)} ${r1(210+Math.sin(r)*52)} L ${r1(990+Math.cos(r)*68)} ${r1(210+Math.sin(r)*68)}`,6,'#FFE07A');}).join('')
-    +P(heartD(1060,300,20),'none','stroke="#FF9DB5" stroke-width="5"')+R(450,368,700,14,6,'#B8865A')+R(560,360,40,10,3,'#fff',NS)+R(620,360,30,10,3,'#FFD166',NS)
+    +R(450,368,700,14,6,'#B8865A')+R(560,360,40,10,3,'#fff',NS)+R(620,360,30,10,3,'#FFD166',NS)
     +R(1280,150,170,170,85,'#fff')+C(1365,235,70,'#fff')+L('M 1365 235 L 1365 190',6)+L('M 1365 235 L 1395 250',5)
     +(()=>{let s=L('M 80 70 Q 800 120 1520 70',3);const ls='ABCDEFGHIJ';for(let i=0;i<10;i++){const t=(i+.5)/10,x=r1(80*(1-t)**2+800*2*(1-t)*t+1520*t*t),y=r1(70*(1-t)**2+120*2*(1-t)*t+70*t*t);
       s+=P(`M ${x-24} ${y} L ${x+24} ${y} L ${x} ${y+44} Z`,['#FF8FA8','#FFD166','#7AC7F0','#8FD694','#C3A6FF'][i%5],'stroke-width="3"')+`<text x="${x}" y="${y+24}" text-anchor="middle" font-size="18" font-weight="900" fill="#fff" stroke="none">${ls[i]}</text>`;}return s;})();
@@ -1178,7 +1179,7 @@ function newItem(cat,key,x,y){
   return T(key,x,y,{});
 }
 function addByTap(cat,key){
-  const called=cat==='animal'?callKid(key):null;
+  const called=cat==='animal'?callKid(key):['soccer','basketball'].includes(key)?callBall(key):null;
   const it=called||newItem(cat,key,0,0),d=def(it);
   it.x=camX+viewW*(.18+Math.random()*.64);
   if(d&&d.wall)it.y=150+Math.random()*170;else if(d&&d.floor)it.y=700+Math.random()*120;else it.y=640+Math.random()*200;
@@ -1299,7 +1300,7 @@ function startTrayDrag(e){
     drag={acc:t.key,pid:t.pid,moved:true,ghost:g,lcx:e.clientX,lcy:e.clientY};moveGhost(p);return;
   }
   talk([nameVO(t.cat,t.key)]);
-  const called=t.cat==='animal'?callKid(t.key):null;
+  const called=t.cat==='animal'?callKid(t.key):['soccer','basketball'].includes(t.key)?callBall(t.key):null;
   const it=called||newItem(t.cat,t.key,clamp(p.x,40,WORLD_W()-40),0);it.x=clamp(p.x,40,WORLD_W()-40);it.y=clampY(it,p.y+30);
   if(!called)items().push(it);if(it.k==='a')lastAnimal=it.id;render();
   drag={it,pid:t.pid,moved:false,p0:p,gox:0,goy:def(it)&&def(it).wall?0:30,lcx:e.clientX,lcy:e.clientY};
@@ -2119,7 +2120,10 @@ function lifeStep(dt,t){
     const b=brain(it);
     if(b.st==='fly'){flyStep(it,b,t);continue;}
     if(b.pause&&t<b.pause)continue;
-    if(b.sport){if(t>b.sportUntil||segOf(it)!==roomIdx(b.sport)||b.task)leaveSport(it);continue;}
+    if(b.sport){
+      // 正式比赛的队员：先跑到球场
+      if(segOf(it)!==roomIdx(b.sport)){if(b.sportUntil>1e8&&!b.task){moveToward(it,roomIdx(b.sport)*SEG+800,760,dt,LIFE[it.t].speed*4);continue;}leaveSport(it);continue;}
+      if(t>b.sportUntil||b.task)leaveSport(it);continue;}
     if(b.task&&!b.naughty){taskStep(it,b,dt,t);continue;}
     if(it.nap)continue;
     if(it.h){
@@ -2188,7 +2192,7 @@ function physStep(dt){
 let rafLast=0;
 function lifeTick(ts,maxDt=.05){
   const t=ts/1000,dt=Math.min(maxDt,t-(lifeLast||t));lifeLast=t;
-  if(!document.hidden){try{camStep(dt);physStep(dt);schedStep(dt,t);lifeStep(dt,t);matchStep(dt,t);seekHint(t);}catch(e){console.error(e);}}
+  if(!document.hidden){try{camStep(dt);physStep(dt);schedStep(dt,t);lessonStep(t);lifeStep(dt,t);matchStep(dt,t);seekHint(t);}catch(e){console.error(e);}}
 }
 function lifeLoop(ts){rafLast=performance.now();lifeTick(ts);requestAnimationFrame(lifeLoop);}
 // 保底：逐帧刷新被浏览器暂停时，用定时器按真实时间继续推动
@@ -2543,9 +2547,12 @@ function sportStep(b,p){
   // 进球：球滚进对面球门
   if(segOf(b)===roomIdx('soccer')&&!p.scored)
     for(const g of worldGoals())if(Math.abs(b.x-g.x)<86&&b.y<600&&p.z<120){
+      // 守门员扑救：六成会被扑出来
+      if(!p.saveChecked){p.saveChecked=true;if(Math.random()<.8){p.vy=Math.abs(p.vy)*.7+160;p.vx=-p.vx*.4+rnd(-120,120);b.y=606;sfx.bump();
+        if(segVisible('soccer'))fxText(g.x,470,'🧤','#fff');setTimeout(()=>{p.saveChecked=false;},700);return;}}
       p.scored=true;p.vx*=.15;p.vy=Math.min(0,p.vy*.15);
       cheerAt(g.x,520,null,'⚽');onScore('soccer',g.team,1);
-      setTimeout(()=>{p.on=false;p.vx=p.vy=p.vz=p.z=0;p.scored=false;b.x=roomIdx('soccer')*SEG+800;b.y=740;justAdded=b.id;refresh(b);save();},2600);
+      setTimeout(()=>{p.on=false;p.vx=p.vy=p.vz=p.z=0;p.scored=false;p.saveChecked=false;b.x=roomIdx('soccer')*SEG+800;b.y=740;justAdded=b.id;refresh(b);save();},2600);
       return;
     }
   // 投篮：飞到篮筐时决定进没进
@@ -2625,7 +2632,7 @@ Object.values(CLOTHES).forEach(c=>{if(!c.slot){c.slot='body';c.box=[-72,-200,144
 /* ================= 新东西：评委席、迷宫入口、捉迷藏、过家家 ================= */
 const signText=(x,y,t,size=26,fill='#fff')=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="900" fill="${fill}" stroke="none">${t}</text>`;
 Object.assign(TH,{
-  judges:{n:'评委席',cat:'play',box:[-150,-170,300,175],colors:['#FF8FB1','#7AC7F0','#FFD166'],seats:[{x:-62,y:-72,m:'sit'},{x:62,y:-72,m:'sit'}],
+  judges:{n:'评委席',cat:'none',box:[-150,-170,300,175],colors:['#FF8FB1','#7AC7F0','#FFD166'],seats:[{x:-62,y:-72,m:'sit'},{x:62,y:-72,m:'sit'}],
     art:c=>({b:R(-96,-156,64,70,12,'#F3C99A')+R(28,-156,64,70,12,'#F3C99A'),
       f:R(-146,-116,292,22,8,'#FFF6EE')+P('M -140 -94 L 140 -94 L 130 -10 L -130 -10 Z',c)+[-100,-60,-20,20,60,100].map(x=>L(`M ${x} -94 L ${x} -12`,3,shade(c,-.15))).join('')
         +R(-50,-82,100,30,8,'#fff','stroke-width="3"')+signText(0,-59,'评委',22,O)
@@ -2703,10 +2710,12 @@ function matchStep(dt,t){
   if(story||(curPh&&curPh.act==='sleep'))return;
   for(const room of Object.keys(SPORTS)){
     const cfg=SPORTS[room],seg=roomIdx(room),x0=seg*SEG;
-    const players=items().filter(i=>i.k==='a'&&!i.h&&BR[i.id]&&BR[i.id].sport===room);
+    const players=items().filter(i=>i.k==='a'&&!i.h&&BR[i.id]&&BR[i.id].sport===room&&segOf(i)===seg);
     if(!players.length)continue;
     let ball=items().find(i=>i.t===cfg.ball&&!i.h&&segOf(i)===seg&&!(drag&&drag.it===i));
-    if(!ball){if(drag&&drag.it.t===cfg.ball)continue;ball=T(cfg.ball,x0+800,740);items().push(ball);justAdded=ball.id;refresh(ball);}
+    if(!ball){if(drag&&drag.it.t===cfg.ball)continue;
+      ball=callBall(cfg.ball);if(ball){ball.x=x0+800;ball.y=740;}else{ball=T(cfg.ball,x0+800,740);items().push(ball);}
+      justAdded=ball.id;render();}
     const p=PH[ball.id]||(PH[ball.id]={vx:0,vy:0,z:0,vz:0,a:0});
     for(const team of ['red','blue']){
       const ps=players.filter(i=>BR[i.id].team===team),dir=cfg.target[team]>800?1:-1;
@@ -2718,12 +2727,15 @@ function matchStep(dt,t){
         let tx,ty;
         if(pl===chaser&&!p.scored&&!p.shot){tx=ball.x-dir*40*pl.s*depth(pl);ty=ball.y;}
         else{tx=clamp(ball.x-dir*(170+k*130),x0+120,x0+1480);ty=[640,820,730][k%3];}
-        moveToward(pl,clamp(tx,x0+90,x0+1510),ty,dt,(LIFE[pl.t].speed+70)*1.2);
+        // 进球后：各自退回半场，等开球
+        if(MATCH&&MATCH.room===room&&MATCH.pauseUntil>t){tx=x0+800-dir*(220+k*150);ty=[640,820,730][k%3];}
+        moveToward(pl,clamp(tx,x0+90,x0+1510),ty,dt,MATCH&&MATCH.room===room?170:(LIFE[pl.t].speed+70)*1.2);
+        if(MATCH&&MATCH.room===room&&MATCH.pauseUntil>t)return;
         if(pl===chaser&&m.cd<=0&&!p.shot&&!p.scored&&p.z<40&&Math.hypot(pl.x-ball.x,(pl.y-ball.y)*1.5)<80*pl.s*depth(pl)){
           m.cd=rnd(.8,1.3);anim(pl.id,'hop');
           if(room==='soccer'){
             const gx=x0+cfg.target[team],far=Math.abs(gx-ball.x)>520;
-            const ang=far?Math.atan2(rnd(-60,60),dir):Math.atan2(560-ball.y,gx+rnd(-90,90)-ball.x),pw=far?rnd(330,470):rnd(560,780);
+            const ang=far?Math.atan2(rnd(-60,60),dir):Math.atan2(560-ball.y,gx+rnd(-170,170)-ball.x),pw=far?rnd(330,470):rnd(560,780);
             kickBall(ball,Math.cos(ang)*pw,Math.sin(ang)*pw*.8,rnd(60,200));
           }else{
             const hx=x0+cfg.target[team];
@@ -2738,7 +2750,8 @@ function matchStep(dt,t){
   }
 }
 function onScore(room,team,pts){
-  state.match[room][team]+=pts;save();drawScore();
+  const official=MATCH&&MATCH.room===room&&!MATCH.done;
+  if(official){state.match[room][team]+=pts;MATCH.pauseUntil=nowS()+5.5;save();drawScore();matchGoalCheck(room);}
   if(!segVisible(room))return;
   say([room==='soccer'?(team==='red'?'m_red_goal':'m_blue_goal'):(team==='red'?'m_red_score':'m_blue_score')]);
   sfx.whistle();setTimeout(()=>sfx.crowd(),200);
@@ -2752,9 +2765,9 @@ function drawScore(){
   let s='';
   for(const room of Object.keys(SPORTS)){
     const x=roomIdx(room)*SEG+800,m=state.match[room];
-    s+=`<g transform="translate(${x} 0)">${R(-150,150,12,FL-150,4,'#9D97A8','stroke="#5B4A55" stroke-width="3"')+R(138,150,12,FL-150,4,'#9D97A8','stroke="#5B4A55" stroke-width="3"')}`
+    s+=`<g transform="translate(${x} 0)">${R(-150,150,12,10,4,'#9D97A8','stroke="#5B4A55" stroke-width="3"')+R(138,150,12,10,4,'#9D97A8','stroke="#5B4A55" stroke-width="3"')}`
       +R(-190,30,380,130,22,'#3A3540','stroke="#5B4A55" stroke-width="5"')
-      +signText(0,68,room==='soccer'?'⚽ 足球赛':'🏀 篮球赛',28,'#FFE07A')
+      +signText(0,68,(MATCH&&MATCH.room===room&&!MATCH.done)?(room==='soccer'?'⚽ 足球赛进行中':'🏀 篮球赛进行中'):(room==='soccer'?'⚽ 周三下午比赛':'🏀 周六下午比赛'),26,'#FFE07A')
       +C(-120,112,20,'#FF5A5A','stroke="#fff" stroke-width="3"')+C(120,112,20,'#4F8DF5','stroke="#fff" stroke-width="3"')
       +signText(-55,130,m.red,52,'#fff')+signText(0,126,':',44,'#fff')+signText(55,130,m.blue,52,'#fff')+'</g>';
   }
@@ -2763,13 +2776,17 @@ function drawScore(){
 // 看台上的观众
 function crowdArt(room){
   let s=`<g id="crowd-${room}" class="crowd">`,k=0;const types=Object.keys(AN);
-  for(let r=0;r<3;r++)s+=R(430,FL-150+r*48,740,52,10,['#C9D3E0','#DCE3EC','#EEF2F7'][r],'stroke="#B5BFCC" stroke-width="3"');
-  for(let r=0;r<3;r++)for(let c=0;c<7;c++){
-    const x=480+c*100+(r%2?40:0),y=FL-112+r*48,t=types[(k*4+r)%types.length],red=c<3||(c===3&&r%2===0);
+  // 顶棚 + 三层台阶，占满上面的天空
+  s+=R(120,150,1360,40,14,'#FF8FB1','stroke="#5B4A55" stroke-width="4"');
+  for(let i=0;i<17;i++)s+=R(130+i*80,154,40,32,0,'#FFFFFF',NS+' opacity=".55"');
+  s+=R(150,186,10,190,4,'#C9D3E0')+R(1440,186,10,190,4,'#C9D3E0');
+  for(let r=0;r<3;r++)s+=R(160,200+r*58,1280,62,12,['#C9D3E0','#DCE3EC','#EEF2F7'][r],'stroke="#B5BFCC" stroke-width="3"');
+  for(let r=0;r<3;r++)for(let c=0;c<9;c++){
+    const x=260+c*136+(r%2?50:0),y=266+r*58,t=types[(k*4+r)%types.length],red=c<4||(c===4&&r%2===0);
     const fl=`<g transform="translate(46 -150)">${L('M 0 0 L 0 70',5)}${P('M 0 0 L 46 14 L 0 30 Z',red?'#FF5A5A':'#4F8DF5','stroke-width="4"')}</g>`;
-    s+=`<g transform="translate(${x} ${y}) scale(.36)"><g class="fan" style="animation-delay:-${((k*.31)%1.2).toFixed(2)}s">${animalArt(t,k%3,{seated:true})}${fl}</g></g>`;k++;
+    s+=`<g transform="translate(${x} ${y}) scale(.42)"><g class="fan" style="animation-delay:-${((k*.31)%1.2).toFixed(2)}s">${animalArt(t,k%3,{seated:true})}${fl}</g></g>`;k++;
   }
-  return s+'</g>';
+  return s+R(150,372,1300,14,6,'#B5BFCC')+'</g>';
 }
 
 /* ================= 迷宫小游戏 ================= */
@@ -2966,7 +2983,7 @@ const PHASES=[
   {id:'sleep',start:1200,end:1860,who:'dad',act:'sleep',ic:'😴',n:'睡觉',line:'sched_sleep',rate:3},
 ];
 if(state.clock==null)state.clock=760;
-const phaseAt=c=>{const m=c<420?c+1440:c;return PHASES.find(p=>m>=p.start&&m<p.end)||PHASES[4];};
+const phaseAt=c=>{const m=c<420?c+1440:c;const p=PHASES.find(p=>m>=p.start&&m<p.end)||PHASES[4];return (p.id==='free'&&matchAt(c))||p;};
 let curPh=null,schedT=0,peBeat=0,peN=0,clockSaveT=0;
 const NAUGHTY=[],AM={};
 const kids=()=>items().filter(i=>i.k==='a'&&!i.role&&!i.hidden);
@@ -3023,7 +3040,7 @@ function assignTasks(ph,list){
 function startPhase(ph,quiet){
   const t=nowS();
   if(ph.id==='breakfast'&&curPh)newDay();
-  curPh=ph;ph.t0=t;ph.dur=(ph.end-ph.start)/ph.rate;NAUGHTY.length=0;PS().strikes=0;
+  curPh=ph;ph.t0=t;ph.dur=(ph.end-ph.start)/ph.rate;NAUGHTY.length=0;PS().strikes=0;if(ph.act!=='match')MATCH=null;
   // 叫醒 / 清掉上一个任务
   for(const it of items())if(it.k==='a'){
     const b=brain(it);
@@ -3035,7 +3052,8 @@ function startPhase(ph,quiet){
   for(const id in AM){AM[id].fetch=null;AM[id].napAt=null;}
   const night=ph.act==='sleep';
   if(state.night!==night){state.night=night;}
-  if(ph.act!=='free'){
+  if(ph.act==='match')startMatch(ph);
+  else if(ph.act!=='free'){
     const list=kids().filter(i=>!(drag&&drag.it===i));
     // 一两个调皮鬼
     const bad=pickNaughty(ph,list);
@@ -3050,9 +3068,9 @@ function startPhase(ph,quiet){
 }
 function schedStep(dt,t){
   if(story)return;
-  const ph=phaseAt(state.clock);
-  if(ph!==curPh){startPhase(ph,curPh===null);return;}
-  state.clock=(state.clock+dt*ph.rate)%1440;
+  const ph=phaseAt(state.clock),hold=matchClockHold(ph,t);
+  if(!hold&&ph!==curPh){startPhase(ph,curPh===null);return;}
+  if(!hold)state.clock=(state.clock+dt*ph.rate)%1440;
   if(t>clockSaveT){clockSaveT=t+10;updateClock();save();}
   adultStep(dt,t);
   for(const n of NAUGHTY){const k=getItem(n.id),b=k&&BR[k.id];if(!b||!b.naughty)continue;
@@ -3096,6 +3114,7 @@ function taskStep(it,b,dt,t){
       if(!b.taskDone){b.taskDone=true;onArrive(it,b);setWalk(it,false);if(k.act==='sleep'){it.nap=true;refresh(it);}}
       if(k.act==='eat'&&Math.random()<dt*.12)emote(it,['😋','🍚','🥛'][Math.random()*3|0]);
       if(k.act==='class'&&Math.random()<dt*.06)emote(it,['✏️','🙋','📖'][Math.random()*3|0]);
+      if(k.act==='watch'&&Math.random()<dt*.15){emote(it,['📣','👏','🎉'][Math.random()*3|0]);if(Math.random()<.3)anim(it.id,'hop');}
       return;
     }
     moveToward(it,k.spot.x,k.spot.y,dt,sp);
@@ -3120,12 +3139,13 @@ function adultPost(a,ph,t,m){
     return wander(['living','bedroom','play','kitchen']);
   }
   if(who==='teacher'){
-    if(act==='class')return {x:base('classroom')+800,y:640};
+    if(act==='class')return {x:base('classroom')+800,y:628};
     if(act==='pe')return {x:base('school')+1350,y:700};
     return wander(['classroom','school']);
   }
   if(who==='pe'){
     if(act==='pe')return {x:base('school')+800,y:600};
+    if(act==='match'){const bl=ballOf(ph.room),x0=base(ph.room);return {x:bl?clamp(bl.x+150,x0+100,x0+1500):x0+800,y:850};}
     for(const r of Object.keys(SPORTS))if(segOf(a)===roomIdx(r)&&items().some(i=>BR[i.id]&&BR[i.id].sport===r)){
       const bl=ballOf(r);if(bl)return {x:clamp(bl.x+150,roomIdx(r)*SEG+100,roomIdx(r)*SEG+1500),y:850};}
     return wander(['soccer','basket','school','play']);
@@ -3170,7 +3190,7 @@ function checkHelp(it){
 function updateClock(bump){
   const ph=curPh||phaseAt(state.clock),el=$('#clockHud');
   const st=ph.act!=='free'?Math.min(3,PS().strikes||0):0;
-  el.innerHTML=`<span class="ic">${ph.ic}</span><b>${fmtClock(state.clock)}</b><span class="lb">${ph.n}</span>`
+  el.innerHTML=`<span class="ic">${ph.ic}</span><b>${weekday()} ${fmtClock(state.clock)}</b><span class="lb">${ph.n}</span>`
     +(st?`<span class="warn">${'🟡'.repeat(st)}${'⚪'.repeat(3-st)}</span>`:'');
   if(bump){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
 }
@@ -3184,9 +3204,10 @@ function openBoard(){
   stopVO();
   const list=kids().sort((a,b)=>(b.score??3)-(a.score??3)),P=PS();
   $('#boardBody').innerHTML=`<div class="sched">${PHASES.map(p=>`<span class="${p===curPh?'on':''}">${p.ic}<b>${fmtClock(p.start%1440)}</b></span>`).join('')}</div>`
+    +`<div class="nextm">今天${weekday()}　⚽ 周三 14:00　🏀 周六 14:00</div>`
     +`<div class="me"><span class="who">👧</span><b>⭐${state.coins||0}</b><span>${P.good?'😊👍':'🟡'.repeat(Math.min(3,P.strikes||1))}</span></div>`
     +`<div class="kids">${list.map((k,i)=>`<div class="kid">${k.star?'<i class="crown">👑</i>':''}<span class="rk">${i+1}</span>${thumb('animal',k.t)}`
-      +`<div class="fl">${'🌸'.repeat(Math.min(k.today||0,5))||'&nbsp;'}</div><b>🌸${k.score??3}</b><span class="md">${medalOf(k.score??3)}</span></div>`).join('')}</div>`;
+      +`<div class="fl">${'🌸'.repeat(Math.min(k.today||0,5))||'&nbsp;'}</div><b>🌸${k.score??3}</b><span class="md">${medalOf(k.score??3)}</span>${k.cups?`<span class="cup">🏆${k.cups}</span>`:''}</div>`).join('')}</div>`;
   $('#board').hidden=false;sfx.page();say(['ui_board']);
 }
 $('#clockHud').onclick=openBoard;
@@ -3208,6 +3229,7 @@ const PS=()=>state.player||(state.player={strikes:0,good:true,penPh:null});
 const medalOf=n=>n>=50?'🥇':n>=25?'🥈':n>=10?'🥉':'';
 const temperOf=(it,ph)=>{const t=TEMPER[it.t]||{};return (t[ph.id]??t[ph.act]??.05)*(it.warns?.35:1);};
 function newDay(){
+  state.day=(state.day||1)+1;
   for(const k of kids()){k.today=0;k.warns=0;k.pen=0;}
   const P=PS();P.good=true;P.strikes=0;P.penPh=null;
 }
@@ -3379,6 +3401,160 @@ function leaveSport(it){
 }
 const ballOf=room=>items().find(i=>i.t===SPORTS[room].ball&&!i.h&&segOf(i)===roomIdx(room));
 
+
+/* ================= 讲台 + 会变的黑板 ================= */
+Object.assign(TH,{
+  podium:{n:'讲台',cat:'home',box:[-130,-170,260,175],colors:['#C99A6E','#F3C99A','#A8D8F0'],
+    art:c=>R(-114,-126,228,126,12,c)+R(-126,-150,252,28,10,shade(c,.25))+R(-80,-104,160,64,10,shade(c,.18),'stroke-width="3"')
+      +P(starD(0,-72,20),'#FFD166','stroke-width="3"')+R(-96,-176,56,26,4,'#FF8FA8','stroke-width="3"')+C(70,-166,14,'#FF6B6B','stroke-width="3"')+L('M 70 -180 L 74 -190',3)},
+});
+const CHALK='font-family="Comic Sans MS,Chalkboard SE,Segoe Print,sans-serif" font-weight="900" stroke="none"';
+const chalkT=(x,y,t,size,col='#F4F4EE')=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" fill="${col}" ${CHALK}>${t}</text>`;
+const emoT=(x,y,e,size)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" stroke="none">${e}</text>`;
+const PIC_EMO={'a:cat':'🐱','a:dog':'🐶','a:bunny':'🐰','a:bear':'🐻','a:panda':'🐼','a:pig':'🐷','a:fox':'🦊','a:frog':'🐸','t:duck':'🦆','t:cake':'🎂','t:ball':'⚽','t:balloon':'🎈','t:tree':'🌳'};
+const chalkPic=w=>{const v=WPIC[w];return PIC_EMO[v]||v;};
+// 黑板内容：null = 平时的 ABC 123
+function drawChalk(L){
+  const x0=roomIdx('classroom')*SEG;let s='';
+  if(!L){
+    s=chalkT(600,215,'ABC',70)+chalkT(600,305,'1 2 3',54)
+      +C(990,210,40,'none','stroke="#FFE07A" stroke-width="6"')+[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;
+        return L1(`M ${r1(990+Math.cos(r)*52)} ${r1(210+Math.sin(r)*52)} L ${r1(990+Math.cos(r)*68)} ${r1(210+Math.sin(r)*68)}`);}).join('')
+      +P(heartD(1060,300,20),'none','stroke="#FF9DB5" stroke-width="5"');
+  }else if(L.kind==='word'){
+    s=emoT(640,290,chalkPic(L.w),120)+chalkT(940,230,L.w,L.w.length>6?50:68)+(L.show?chalkT(940,305,VO['zh_'+wid(L.w)]||'',44,'#FFE07A'):'');
+  }else if(L.kind==='color'){
+    s=`<path transform="translate(640 240)" d="M 0 -78 C 50 -84 88 -44 78 6 C 72 52 34 82 -10 78 C -58 74 -88 34 -78 -14 C -72 -54 -40 -74 0 -78 Z" fill="${WPIC[L.w]}" stroke="#F4F4EE" stroke-width="5"/>`
+      +(L.show?chalkT(940,230,L.w,64)+chalkT(940,305,VO['zh_'+L.w]||'',44,'#FFE07A'):chalkT(940,270,'?',110,'#FFE07A'));
+  }else if(L.kind==='count'){
+    const per=L.n>5?Math.ceil(L.n/2):L.n;
+    for(let i=0;i<L.n;i++){const r=Math.floor(i/per),c=i%per;s+=emoT(530+c*70,215+r*85,L.e,58);}
+    s+=L.show?chalkT(1010,265,L.n,110,'#FFE07A')+chalkT(1010,320,VO['zh_'+NUMS[L.n-1]]||'',36):chalkT(1010,290,'?',120,'#FFE07A');
+  }else if(L.kind==='add'){
+    let x=520;const grp=(n)=>{let t='';for(let i=0;i<n;i++){t+=emoT(x,265,L.e,52);x+=58;}return t;};
+    s+=grp(L.a);s+=chalkT(x+4,265,'+',64);x+=66;s+=grp(L.b);s+=chalkT(x+10,265,'=',64);
+    s+=L.show?chalkT(x+80,272,L.a+L.b,96,'#FFE07A'):chalkT(x+80,280,'?',100,'#FFE07A');
+  }
+  $('#chalkL').innerHTML=`<g transform="translate(${x0} 0)"><g class="chalkin">${s}</g></g>`;
+}
+const L1=d=>`<path d="${d}" fill="none" stroke="#FFE07A" stroke-width="6" stroke-linecap="round"/>`;
+let LES=null,lesT=0,lesHello=false;
+const classVisible=()=>segVisible('classroom');
+function teacherAtPodium(){
+  const tc=items().find(i=>i.who==='teacher');if(!tc)return null;
+  const x=roomIdx('classroom')*SEG+800;return segOf(tc)===roomIdx('classroom')&&Math.abs(tc.x-x)<80?tc:null;
+}
+function classKids(){return kids().filter(k=>{const b=BR[k.id];return b&&b.task&&b.task.act==='class'&&b.taskDone;});}
+function lessonStep(t){
+  if(!curPh||curPh.act!=='class'||story){if(LES||lesHello){LES=null;lesHello=false;drawChalk(null);}return;}
+  const tc=teacherAtPodium();if(!tc||LES&&LES.busy||t<lesT)return;
+  runLesson(tc);
+}
+async function runLesson(tc){
+  const tok={};LES={busy:true,tok};const alive=()=>LES&&LES.tok===tok&&curPh&&curPh.act==='class';
+  const vis=classVisible(),wait=ms=>sleep(ms),talkIf=async ids=>{if(classVisible()&&!story)await say(ids);else await wait(1800*ids.length);};
+  if(!lesHello){lesHello=true;anim(tc.id,'hop');await talkIf(['les_start','kids_hello']);for(const k of classKids())anim(k.id,'hop');if(!alive())return;}
+  const kinds=['word','word','count','add','color'],kind=kinds[Math.random()*kinds.length|0];
+  const pick=a=>a[Math.random()*a.length|0],E=pick(['🍎','🍓','⭐','🐟','🌸','🎈']);
+  let L;
+  if(kind==='word')L={kind,w:pick([...UNITS[0].words,...UNITS[3].words,...UNITS[4].words,...UNITS[6].words])};
+  else if(kind==='color')L={kind,w:pick(UNITS[1].words)};
+  else if(kind==='count')L={kind,n:2+(Math.random()*7|0),e:E};
+  else{const a=1+(Math.random()*3|0),b=1+(Math.random()*(5-a)|0);L={kind,a,b,e:E};}
+  drawChalk(L);emote(tc,'👉');anim(tc.id,'hop');
+  if(kind==='word'){
+    await talkIf(['les_word']);if(!alive())return;
+    L.show=true;drawChalk(L);await talkIf(['en_'+wid(L.w)]);for(const k of classKids())if(Math.random()<.6)anim(k.id,'hop');
+    await talkIf(['en_'+wid(L.w),'zh_'+wid(L.w)]);
+  }else{
+    await talkIf([kind==='count'?'les_count':kind==='add'?'les_add':'les_color']);if(!alive())return;
+    for(const k of classKids())if(Math.random()<.7)setTimeout(()=>emote(k,'🙋'),rnd(0,900));
+    await wait(1600);if(!alive())return;
+    L.show=true;drawChalk(L);
+    const n=kind==='add'?L.a+L.b:L.n;
+    await talkIf(kind==='color'?['zh_'+L.w,'en_'+L.w]:['zh_'+NUMS[n-1],'en_'+NUMS[n-1]]);
+    if(!alive())return;await talkIf(['les_good']);
+  }
+  if(!alive())return;
+  LES.busy=false;lesT=nowS()+(vis?2.5:4);
+}
+
+/* ================= 星期 + 正式比赛（每周两场，每场 90 分钟，必须分出胜负） ================= */
+const WEEK=['周一','周二','周三','周四','周五','周六','周日'];
+if(state.day==null)state.day=1;
+const weekday=()=>WEEK[(state.day-1)%7];
+const MATCH_DAYS={3:'soccer',6:'basket'}; // 周三足球、周六篮球
+const MATCHPH={
+  soccer:{id:'match_soccer',act:'match',room:'soccer',who:'pe',ic:'⚽',n:'足球赛',line:'match_soccer',rate:.5,start:840,end:930},
+  basket:{id:'match_basket',act:'match',room:'basket',who:'pe',ic:'🏀',n:'篮球赛',line:'match_basket',rate:.5,start:840,end:930},
+};
+let MATCH=null;
+const todayMatch=()=>MATCH_DAYS[((state.day-1)%7)+1]||null;
+function matchAt(c){const r=todayMatch();return r&&c>=840&&c<930?MATCHPH[r]:null;}
+function startMatch(ph){
+  const room=ph.room;state.match[room]={red:0,blue:0};drawScore();
+  MATCH={room,ot:false,done:false};
+  const ks=kids().filter(k=>!(drag&&drag.it===k));
+  const n=room==='soccer'?6:4,t=nowS();
+  const players=[...ks].sort((a,b)=>((LIFE[b.t].likes.sport||0)-(LIFE[a.t].likes.sport||0))||Math.random()-.5).slice(0,n);
+  // 球回到中圈
+  const ball=items().find(i=>i.t===SPORTS[room].ball);
+  if(ball){ball.h=null;ball.si=null;ball.x=roomIdx(room)*SEG+800;ball.y=740;const q=PH[ball.id];if(q){q.on=false;q.vx=q.vy=q.vz=q.z=0;q.shot=null;q.scored=false;}}
+  players.forEach((k,i)=>{
+    const b=brain(k);if(k.h)getOff(k);k.nap=false;
+    k.x=clamp(k.x,60,WORLD_W()-60);
+    b.sport=room;b.team=i%2?'blue':'red';b.sportUntil=1e9;b.st='sport';b.task=null;
+    k.acc=k.acc||{};b.prevBody=k.acc.body||null;k.acc.body='jersey_'+b.team;
+  });
+  // 没上场的去场边看
+  const watchers=ks.filter(k=>!players.includes(k));
+  const spots=spotsIn(room,watchers.length,[878],200,1400);
+  watchers.forEach((k,i)=>{const b=brain(k);b.task={act:'watch',room,spot:spots[i]};b.taskDone=false;b.rewarded=true;});
+  render();
+}
+function finishMatch(room){
+  if(!MATCH||MATCH.done)return;MATCH.done=true;
+  const m=state.match[room],win=m.red>m.blue?'red':'blue';
+  const players=items().filter(i=>BR[i.id]&&BR[i.id].sport===room);
+  for(const k of players)if(BR[k.id].team===win){
+    k.score=(k.score??3)+2;k.today=(k.today||0)+2;k.cups=(k.cups||0)+1;
+    setTimeout(()=>{anim(k.id,'jump');emote(k,'🏆');const L=layout[k.id];if(L)fxText(L.x,L.y-190*L.S,'+2🌸','#FF6F9C');},rnd(200,900));
+  }
+  state.match.history=(state.match.history||[]).concat([{day:state.day,room,red:m.red,blue:m.blue,win}]).slice(-20);
+  if(segVisible(room)){say(['match_win_'+win]);sfx.whistle();setTimeout(()=>sfx.crowd(),300);celebrate();
+    const cr=document.getElementById('crowd-'+room);if(cr){cr.classList.add('roar');setTimeout(()=>cr.classList.remove('roar'),4000);}}
+  // 一会儿后比分清零，等下一场
+  setTimeout(()=>{state.match[room]={red:0,blue:0};drawScore();save();},8000);
+  save();
+}
+// 90 分钟到了还平局：加时，先进球的赢；加时也没进就点球
+function matchClockHold(ph,t){
+  if(!curPh||curPh.act!=='match'||ph===curPh||!MATCH||MATCH.done)return false;
+  const m=state.match[curPh.room];
+  if(m.red===m.blue){
+    if(!MATCH.ot){MATCH.ot=true;MATCH.otUntil=t+60;if(segVisible(curPh.room))say(['match_ot']);}
+    if(t<MATCH.otUntil)return true;
+    (Math.random()<.5?m.red++:m.blue++);drawScore();if(segVisible(curPh.room))say(['match_pens']);
+  }
+  finishMatch(curPh.room);return false;
+}
+// 加时赛里进球：马上结束
+function matchGoalCheck(room){if(MATCH&&MATCH.room===room&&MATCH.ot&&!MATCH.done){const m=state.match[room];if(m.red!==m.blue)finishMatch(room);}}
+// 每种球只有一个：跑出球场就被体育老师拿回来；道具栏里拖球也只是把它叫过来
+function callBall(key){
+  const b=items().find(i=>i.t===key);if(!b)return null;
+  b.h=null;b.si=null;const q=PH[b.id];if(q){q.on=false;q.vx=q.vy=q.vz=q.z=0;q.shot=null;}
+  return b;
+}
+function dedupeBalls(){
+  for(const key of ['soccer','basketball']){
+    const all=items().filter(i=>i.t===key);if(all.length<=1)continue;
+    const home=roomIdx(key==='soccer'?'soccer':'basket');
+    const keep=all.find(i=>segOf(i)===home)||all[0];
+    state.world=items().filter(i=>i.t!==key||i===keep);
+  }
+}
+
 /* ================= 开始 ================= */
 RAIL.addEventListener('change',()=>renderTray());
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -3392,6 +3568,22 @@ if((state.v||0)<3){
 items().forEach(i=>{if(i.hidden){i.hidden=false;i.auto=true;}i.behind=null;i.nap=false;});
 for(const who in ADULT)if(!items().some(i=>i.role==='adult'&&i.who===who)){const d=ADULT[who];items().push(AD(who,roomIdx(d.room)*SEG+rnd(500,1100),830));}
 if((state.v||0)<5){dedupeKids();setupOwned();state.v=5;save();}
+if((state.v||0)<6){
+  dedupeBalls();
+  const cs=roomIdx('classroom');
+  if(!items().some(i=>i.t==='podium'))items().push(T('podium',cs*SEG+800,665));
+  const pos=[[260,725],[500,725],[1100,725],[1340,725],[380,850],[620,850],[860,850],[1100,850],[1340,850]];
+  KIDS.forEach((sp,i)=>{const d=items().find(x=>x.t==='desk'&&x.owner===sp);if(d){d.x=cs*SEG+pos[i][0];d.y=pos[i][1];}});
+  const gt=items().find(i=>i.t==='table'&&segOf(i)===cs);if(gt)gt.x=cs*SEG+1540;
+  state.v=6;save();
+}
+if((state.v||0)<7){state.match.soccer={red:0,blue:0};state.match.basket={red:0,blue:0};state.v=7;save();}
+if((state.v||0)<8){
+  const jd=new Set(items().filter(i=>i.t==='judges').map(i=>i.id));
+  for(const it of items())if(it.h&&jd.has(it.h)){const h=getItem(it.h);it.h=null;it.si=null;it.x=h.x+rnd(-120,120);it.y=clampY(it,h.y-40);}
+  state.world=items().filter(i=>!jd.has(i.id));state.v=8;save();
+}
+drawChalk(null);
 renderRooms();renderTray();computeView();render();drawScore();
 </script>
 </body>
