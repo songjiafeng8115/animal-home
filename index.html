@@ -612,6 +612,7 @@ function animalArt(t,ci,o={}){
   s+=E(0,-34,22,21,p.l,NS);
   if(CL) s+=(CL.torso?CL.torso():'')+(CL.over?CL.over():'');
   s+=E(-31,-44,10,15,a,'transform="rotate(28 -31 -44)"')+E(31,-44,10,15,a,'transform="rotate(-28 31 -44)"');
+  if(CL&&CL.hands)s+=CL.hands();
   const [hrx,hry]=A.head||[54,48];
   s+=E(0,-104+(48-hry)/2,hrx,hry,p.b);
   s+=A.face?A.face(p):'';
@@ -2548,8 +2549,12 @@ function sportStep(b,p){
   if(segOf(b)===roomIdx('soccer')&&!p.scored)
     for(const g of worldGoals())if(Math.abs(b.x-g.x)<86&&b.y<600&&p.z<120){
       // 守门员扑救：六成会被扑出来
-      if(!p.saveChecked){p.saveChecked=true;if(Math.random()<.8){p.vy=Math.abs(p.vy)*.7+160;p.vx=-p.vx*.4+rnd(-120,120);b.y=606;sfx.bump();
-        if(segVisible('soccer'))fxText(g.x,470,'🧤','#fff');setTimeout(()=>{p.saveChecked=false;},700);return;}}
+      if(!p.saveChecked){p.saveChecked=true;
+        const kp=items().find(o=>BR[o.id]&&BR[o.id].sport==='soccer'&&BR[o.id].keeper&&BR[o.id].team!==g.team&&segOf(o)===roomIdx('soccer'));
+        const saved=kp?(Math.abs(kp.x-b.x)<95*kp.s*depth(kp)&&Math.abs(kp.y-618)<90):Math.random()<.5;
+        if(saved){p.vy=Math.abs(p.vy)*.7+160;p.vx=-p.vx*.4+rnd(-120,120);b.y=606;sfx.bump();
+          if(kp){anim(kp.id,'jump');emote(kp,'🧤');}else if(segVisible('soccer'))fxText(g.x,470,'🧤','#fff');
+          setTimeout(()=>{p.saveChecked=false;},700);return;}}
       p.scored=true;p.vx*=.15;p.vy=Math.min(0,p.vy*.15);
       cheerAt(g.x,520,null,'⚽');onScore('soccer',g.team,1);
       setTimeout(()=>{p.on=false;p.vx=p.vy=p.vz=p.z=0;p.scored=false;p.saveChecked=false;b.x=roomIdx('soccer')*SEG+800;b.y=740;justAdded=b.id;refresh(b);save();},2600);
@@ -2720,10 +2725,17 @@ function matchStep(dt,t){
     for(const team of ['red','blue']){
       const ps=players.filter(i=>BR[i.id].team===team),dir=cfg.target[team]>800?1:-1;
       let chaser=null,bd=1e9;
-      for(const pl of ps){if(drag&&drag.it===pl)continue;const d=Math.hypot(pl.x-ball.x,(pl.y-ball.y)*1.5);if(d<bd){bd=d;chaser=pl;}}
+      for(const pl of ps){if(drag&&drag.it===pl||BR[pl.id].keeper)continue;const d=Math.hypot(pl.x-ball.x,(pl.y-ball.y)*1.5);if(d<bd){bd=d;chaser=pl;}}
       ps.forEach((pl,k)=>{
         if(drag&&drag.it===pl)return;
         const m=MT[pl.id]||(MT[pl.id]={cd:rnd(0,1)});m.cd-=dt;
+        if(room==='soccer'&&BR[pl.id].keeper){
+          const own=x0+cfg.target[team==='red'?'blue':'red'],close=Math.abs(ball.x-own)<180&&ball.y<720&&!p.scored;
+          moveToward(pl,close?ball.x:clamp(ball.x,own-80,own+80),close?ball.y+6:618,dt,230);
+          if(close&&m.cd<=0&&p.z<40&&Math.hypot(pl.x-ball.x,(pl.y-ball.y)*1.5)<80*pl.s*depth(pl)){
+            m.cd=1.2;anim(pl.id,'jump');emote(pl,'🧤');kickBall(ball,dir*rnd(450,650),rnd(140,260),rnd(150,300));}
+          return;
+        }
         let tx,ty;
         if(pl===chaser&&!p.scored&&!p.shot){tx=ball.x-dir*40*pl.s*depth(pl);ty=ball.y;}
         else{tx=clamp(ball.x-dir*(170+k*130),x0+120,x0+1480);ty=[640,820,730][k%3];}
@@ -2960,6 +2972,12 @@ Object.assign(CLOTHES,{
   tracksuit:{n:'运动服',torso:()=>TORSO('#FF6A5A',R(-40,-80,7,82,0,'#fff',NS)+R(33,-80,7,82,0,'#fff',NS)+L('M 0 -80 L 0 0',3,'#FFFFFF')),
     over:()=>L('M -14 -64 Q 0 -46 14 -64',2.5)+R(4,-52,16,9,4,'#FFD166','stroke-width="2.5"'),
     hat:()=>P('M -34 2 Q -34 -34 0 -36 Q 34 -34 34 2 Z','#FF6A5A')+P('M 10 -2 L 64 -2 Q 66 8 54 10 L 10 8 Z','#E8503F')+C(0,-36,5,'#fff')},
+});
+Object.assign(CLOTHES,{
+  keeper_red:{n:'红队守门员',torso:()=>TORSO('#C8322A',R(-40,-80,80,9,0,'#FFD166',NS)+`<text x="0" y="-24" text-anchor="middle" font-size="30" font-weight="900" fill="#FFD166" stroke="none">1</text>`),
+    hands:()=>C(-39,-32,11,'#FFFFFF','stroke-width="3"')+C(39,-32,11,'#FFFFFF','stroke-width="3"')},
+  keeper_blue:{n:'蓝队守门员',torso:()=>TORSO('#2F63C9',R(-40,-80,80,9,0,'#FFD166',NS)+`<text x="0" y="-24" text-anchor="middle" font-size="30" font-weight="900" fill="#FFD166" stroke="none">1</text>`),
+    hands:()=>C(-39,-32,11,'#FFFFFF','stroke-width="3"')+C(39,-32,11,'#FFFFFF','stroke-width="3"')},
 });
 Object.values(CLOTHES).forEach(c=>{if(!c.slot){c.slot='body';c.box=[-72,-200,144,210];c.art=()=>clothesPieces(c,true);}});
 const ADULT={dad:{t:'bear',c:0,acc:{body:'dadshirt',face:'glasses'},lb:'👨 爸爸',room:'living'},
@@ -3391,11 +3409,12 @@ function joinSport(it,b,room,t){
   const others=items().filter(o=>o!==it&&BR[o.id]&&BR[o.id].sport===room),reds=others.filter(o=>BR[o.id].team==='red').length;
   const team=reds<=others.length-reds?'red':'blue';
   b.sport=room;b.team=team;b.sportUntil=t+rnd(45,90);b.st='sport';
-  it.acc=it.acc||{};b.prevBody=it.acc.body||null;it.acc.body='jersey_'+team;refresh(it);emote(it,room==='soccer'?'⚽':'🏀');
+  const mates=others.filter(o=>BR[o.id].team===team);b.keeper=room==='soccer'&&mates.length>=1&&!mates.some(o=>BR[o.id].keeper);
+  it.acc=it.acc||{};b.prevBody=it.acc.body||null;it.acc.body=(b.keeper?'keeper_':'jersey_')+team;refresh(it);emote(it,room==='soccer'?'⚽':'🏀');
 }
 function leaveSport(it){
   const b=BR[it.id];if(!b||!b.sport)return;
-  b.sport=null;b.team=null;
+  b.sport=null;b.team=null;b.keeper=false;
   if(it.acc){if(b.prevBody)it.acc.body=b.prevBody;else delete it.acc.body;}
   b.prevBody=null;b.st='idle';b.until=nowS()+rnd(2,4);setWalk(it,false);refresh(it);
 }
@@ -3504,8 +3523,9 @@ function startMatch(ph){
     const b=brain(k);if(k.h)getOff(k);k.nap=false;
     k.x=clamp(k.x,60,WORLD_W()-60);
     b.sport=room;b.team=i%2?'blue':'red';b.sportUntil=1e9;b.st='sport';b.task=null;
-    k.acc=k.acc||{};b.prevBody=k.acc.body||null;k.acc.body='jersey_'+b.team;
+    k.acc=k.acc||{};b.prevBody=k.acc.body||null;k.acc.body='jersey_'+b.team;b.keeper=false;
   });
+  if(room==='soccer')for(const team of ['red','blue']){const kp=players.find(k=>BR[k.id].team===team);if(kp){BR[kp.id].keeper=true;kp.acc.body='keeper_'+team;}}
   // 没上场的去场边看
   const watchers=ks.filter(k=>!players.includes(k));
   const spots=spotsIn(room,watchers.length,[878],200,1400);
