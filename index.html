@@ -653,7 +653,7 @@ function animalArt(t,ci,o={}){
   if(CL&&CL.hat&&!(acc.head&&ACC[acc.head])) s+=`<g transform="translate(0 ${hy+10})">${CL.hat()}</g>`;
   if(acc.head&&ACC[acc.head]){const d=ACC[acc.head];s+=`<g transform="translate(${d.dx} ${hy+d.dy}) rotate(${d.rot||0})">${d.art()}</g>`;}
   if(o.label)s+=adultLabel(o.label,o.flip);
-  if(o.sick)s+=`<text x="34" y="${hy+6}" text-anchor="middle" font-size="40" stroke="none">${{tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'}[o.sick]}</text>`+(o.sick==='leg'?R(-30,-22,22,14,4,'#FFFFFF','stroke-width="2.5"'):o.sick==='tooth'?P('M -54 -96 Q -60 -80 -48 -76 Q -44 -92 -54 -96 Z','#FFFFFF','stroke-width="2.5"'):'');
+  if(o.sick)s+=`<text x="34" y="${hy+6}" text-anchor="middle" font-size="40" stroke="none">${{tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧',unk:'❓'}[o.sick]}</text>`+(o.sick==='leg'?R(-30,-22,22,14,4,'#FFFFFF','stroke-width="2.5"'):o.sick==='tooth'?P('M -54 -96 Q -60 -80 -48 -76 Q -44 -92 -54 -96 Z','#FFFFFF','stroke-width="2.5"'):'');
   if(acc.body==='raincoat')s+=`<g transform="translate(0 ${hy-90})" pointer-events="none">${cloudNS(0,0,.9,'#C9D3E0')}${[-36,-14,8,30].map((x,i)=>L(`M ${x} 14 L ${x-4} 30`,4,'#7AC7F0',`class="drop" style="animation-delay:${i*.18}s"`)).join('')}</g>`;
   if(o.crown)s+=`<text x="0" y="${hy-(acc.head?52:2)}" text-anchor="middle" font-size="44" stroke="none">👑</text>`;
   return s;
@@ -1088,7 +1088,7 @@ const canSeat=it=>it.k==='a'||(def(it)&&def(it).small);
 
 /* ================= 绘制 ================= */
 function artOf(it,opt={}){
-  if(it.k==='a') return {b:animalArt(it.t,it.c,{eyes:opt.eyes,acc:it.acc,seated:opt.seated,dirty:it.dirty,label:it.role==='adult'?it.who:null,flip:it.f,crown:!!it.star,sick:it.sick})};
+  if(it.k==='a') return {b:animalArt(it.t,it.c,{eyes:opt.eyes,acc:it.acc,seated:opt.seated,dirty:it.dirty,label:it.role==='adult'?it.who:null,flip:it.f,crown:!!it.star,sick:it.sick?(it.dx?it.sick:'unk'):null})};
   const d=TH[it.t],col=d.colors[it.c%d.colors.length];
   let r=d.art(col,it,{night:state.night});if(typeof r==='string')r={b:r};
   if(!d.wall&&!d.floor&&!opt.seated){const w=r1(d.box[2]*.4);r.b=E(0,0,w,Math.max(8,r1(w*.12)),'rgba(91,74,85,.1)',NS)+r.b;}
@@ -1187,8 +1187,9 @@ const CATS=[
 ];
 const isAccK=(cat,k)=>cat==='dress'||cat==='clothes'||(cat==='med'&&!!ACC[k]&&MED_ACC.includes(k));
 const normCat=(cat,k)=>cat==='med'&&MED_ACC.includes(k)?'dress':cat;
-function catKeys(c){if(c==='animal')return Object.keys(AN);if(c==='med')return Object.keys(TH).filter(k=>TH[k].cat==='med').concat(MED_ACC);if(c==='dress')return Object.keys(ACC);if(c==='clothes')return Object.keys(CLOTHES);return Object.keys(TH).filter(k=>TH[k].cat===c);}
+function catKeys(c){if(c==='tools')return Object.keys(TOOL);if(c==='animal')return Object.keys(AN);if(c==='med')return Object.keys(TH).filter(k=>TH[k].cat==='med').concat(MED_ACC);if(c==='dress')return Object.keys(ACC);if(c==='clothes')return Object.keys(CLOTHES);return Object.keys(TH).filter(k=>TH[k].cat===c);}
 function thumb(cat,k){
+  if(cat==='tools')return toolThumb(k);
   cat=normCat(cat,k);let box,art;
   if(cat==='animal'){box=AN[k].box||[-62,-172,124,182];art=animalArt(k,0,{});}
   else if(cat==='dress'){box=ACC[k].box;art=ACC[k].art(20);}
@@ -1199,7 +1200,7 @@ function thumb(cat,k){
   const pad=Math.max(box[2],box[3])*.08;
   return `<svg viewBox="${box[0]-pad} ${box[1]-pad} ${box[2]+pad*2} ${box[3]+pad*2}"><g stroke="${O}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${art}</g></svg>`;
 }
-const nameOf=(cat,k)=>(cat=normCat(cat,k),cat==='animal'?AN[k].n:cat==='dress'?ACC[k].n:cat==='clothes'?CLOTHES[k].n:TH[k].n);
+const nameOf=(cat,k)=>(cat=normCat(cat,k),cat==='tools'?TOOL[k].n:cat==='animal'?AN[k].n:cat==='dress'?ACC[k].n:cat==='clothes'?CLOTHES[k].n:TH[k].n);
 function renderTray(){
   $('#tabs').innerHTML=CATS.map(c=>`<button class="tab ${state.cat===c.id&&!state.trayHidden?'on':''}" data-cat="${c.id}" style="--c:${c.c}"><span>${c.ic}</span><b>${c.n}</b></button>`).join('')
     +`<button class="tab fold" data-cat="_fold" title="收起/展开">${RAIL.matches?(state.trayHidden?'◀':'▶'):(state.trayHidden?'▲':'▼')}</button>`;
@@ -1266,7 +1267,7 @@ function tap(it){
     if(it.t==='monster'&&SC.hero){const h=getItem(SC.hero.hero);if(h)heroHit(SC.hero,h,it);else{anim(it.id,'wiggle');sfx.punch();}return;}
     if(it.t==='thief'&&SC.police&&SC.police.stage==='steal'){const h=getItem(SC.police.hero);if(h){h.x=it.x-(it.f?-1:1)*70;h.y=it.y;placeNode(h);}return;}
     anim(it.id,'wiggle');if(['trex','trike','brachio','ptero','monster'].includes(it.t))sfx.roar();return;}
-  if(it.k==='a'&&it.sick&&!story){openTreat(it);return;}
+  if(it.k==='a'&&it.sick&&!story){sickTap(it);return;}
   if(it.role==='adult'){anim(it.id,'jump');ANIMAL_SND[it.t]();if(!story)say(['me_'+it.who]);return;}
   if(it.k==='a'&&it.hidden&&HS){tbOpen=false;placeToolbar();seekFound(it);return;}
   if(it.k==='a'&&canFly(it)&&!story&&!it.h){flyNow(it);ANIMAL_SND[it.t]();return;}
@@ -1348,6 +1349,10 @@ function showSeatHint(s){
 function startTrayDrag(e){
   const t=trayDrag;t.el.classList.remove('press');trayDrag=null;hideHint();
   const p=svgPt(e);
+  if(t.cat==='tools'){
+    const g=document.createElementNS(SVGNS,'g');g.innerHTML=`<g stroke="${O}" stroke-width="4">${toolArt(t.key,1)}</g>`;fxL.appendChild(g);
+    drag={tool:t.key,pid:t.pid,moved:true,ghost:g,lcx:e.clientX,lcy:e.clientY};moveGhost(p);talk([nameVO(t.cat,t.key)]);return;
+  }
   if(isAccK(t.cat,t.key)){
     const g=document.createElementNS(SVGNS,'g');g.innerHTML=`<g>${ACCALL()[t.key].art(20)}</g>`;fxL.appendChild(g);
     drag={acc:t.key,pid:t.pid,moved:true,ghost:g,lcx:e.clientX,lcy:e.clientY};moveGhost(p);return;
@@ -1375,7 +1380,7 @@ window.addEventListener('pointermove',e=>{
   }
   if(!drag||e.pointerId!==drag.pid)return;
   const p=svgPt(e);
-  if(drag.acc){moveGhost(p);return;}
+  if(drag.acc||drag.tool){moveGhost(p);return;}
   if(!drag.moved){if(Math.hypot(e.clientX-drag.sx,e.clientY-drag.sy)<7)return;if(drag.it&&(drag.it.role==='adult'||(def(drag.it)&&def(drag.it).npc)))return;beginMove();}
   moveTo(p);roomHover(e);
 });
@@ -1384,13 +1389,14 @@ function endPointer(e,cancel){
   if(trayDrag&&!drag&&e.pointerId===trayDrag.pid){
     const t=trayDrag;trayDrag=null;t.el.classList.remove('press');
     if(!cancel){hideHint();if(isAccK(t.cat,t.key)){const target=(getItem(sel)&&getItem(sel).k==='a'&&getItem(sel))||getItem(lastAnimal)||items().find(i=>i.k==='a');
-      if(target)applyAcc(target,t.key);else sfx.poof();}else addByTap(t.cat,t.key);}
+      if(target)applyAcc(target,t.key);else sfx.poof();}else if(t.cat==='tools'){talk([nameVO(t.cat,t.key)]);setTimeout(()=>say(['tool_drag']),900);}else addByTap(t.cat,t.key);}
     return;
   }
   if(!drag||e.pointerId!==drag.pid)return;
   const d=drag;drag=null;showSeatHint(null);
   const rb=d.it&&d.moved&&!cancel?roomBtnAt(e):null;roomHover(null);
   if(rb&&rb.dataset.room){sendToRoom(d.it,rb.dataset.room);return;}
+  if(d.tool){d.ghost.remove();const a=cancel?null:animalAt(svgPt(e));if(a)applyTool(a,d.tool);else{sel=null;markSel();sfx.poof();}return;}
   if(d.acc){d.ghost.remove();const a=cancel?null:animalAt(svgPt(e));if(a)applyAcc(a,d.acc);else{sel=null;markSel();sfx.poof();}return;}
   if(!d.moved){if(!cancel)tap(d.it);return;}
   const it=d.it;
@@ -1727,7 +1733,7 @@ async function say(ids,{story:isStory=false}={}){
 // 随手的名字播报：不打断故事旁白
 function talk(ids){if(VOX.story&&VOX.res)return;say(ids);}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const nameVO=(cat,k)=>(cat=normCat(cat,k),cat==='animal'?'an_':cat==='dress'?'ac_':cat==='clothes'?'cl_':'th_')+k;
+const nameVO=(cat,k)=>(cat=normCat(cat,k),cat==='tools'?'tl_':cat==='animal'?'an_':cat==='dress'?'ac_':cat==='clothes'?'cl_':'th_')+k;
 
 /* ================= 故事 ================= */
 function storyScenes(){
@@ -2579,7 +2585,7 @@ function camStep(dt){
     }else{
     const r=stage.getBoundingClientRect();let v=0;
     if(drag.lcx<r.left+56)v=-1;else if(drag.lcx>r.right-56)v=1;
-    if(v){const c0=camX;camX+=v*750*dt;clampCam();if(camX!==c0){applyCam();const p=svgPtXY(drag.lcx,drag.lcy);if(drag.acc)moveGhost(p);else moveTo(p);}}
+    if(v){const c0=camX;camX+=v*750*dt;clampCam();if(camX!==c0){applyCam();const p=svgPtXY(drag.lcx,drag.lcy);if(drag.acc||drag.tool)moveGhost(p);else moveTo(p);}}
     }
   }
 }
@@ -4350,7 +4356,7 @@ function treatTap(p){
 }
 function celebrateAt(L){fx(L.x,L.y-120*L.S,'confetti',14);}
 function cureKid(p){
-  if(!p.sick)return false;p.sick=null;const b=brain(p);b.scn=false;b.st='idle';b.until=nowS()+2;refresh(p);
+  if(!p.sick)return false;p.sick=null;delete p.dx;const b=brain(p);b.scn=false;b.st='idle';b.until=nowS()+2;refresh(p);
   const L=layout[p.id];if(L)fx(L.x,L.y-150*L.S,'heart',8);emote(p,'💖');return true;
 }
 const KG={cat:12,dog:16,bunny:9,bear:28,panda:30,chick:6,pig:22,frog:7,fox:14,sheep:20,monkey:15,tiger:26,lion:29,elephant:40};
@@ -4410,10 +4416,10 @@ function clinicStart(desk){
   CLINIC={q:[],total:n,done:0,t0:t};
   pts.forEach((k,i)=>{const b=brain(k);if(k.h)getOff(k);k.nap=false;b.scn=true;b.task=null;b.naughty=false;b.st='idle';
     k.sick=SICKS[(i+Math.random()*5|0)%SICKS.length];k.cl={st:'go',seat:null};refresh(k);CLINIC.q.push(k.id);});
-  sfx.bell();anim(desk.id,'jump');refresh(desk);say(['clinic_open']);
+  sfx.bell();anim(desk.id,'jump');refresh(desk);say(['clinic_open']);openTools();
 }
 function clinicLeave(k,cured){
-  const b=brain(k);if(k.h)getOff(k);b.scn=false;b.st='idle';b.until=nowS()+2;k.cl=null;k.sick=null;setWalk(k,false);refresh(k);
+  const b=brain(k);if(k.h)getOff(k);b.scn=false;b.st='idle';b.until=nowS()+2;k.cl=null;k.sick=null;delete k.dx;setWalk(k,false);refresh(k);
   if(cured){emote(k,'👋');k.score=(k.score??3)+1;k.today=(k.today||0)+1;}
 }
 function clinicStep(dt,t){
@@ -4426,7 +4432,7 @@ function clinicStep(dt,t){
   const left=CLINIC.q.map(getItem).filter(Boolean);
   if(!left.length){
     CLINIC=null;const d=items().find(i=>i.t==='clinicdesk');if(d)refresh(d);
-    if(segVisible('hospital')){say(['clinic_done']);celebrate();}
+    if(segVisible('hospital')){say(['clinic_done']);celebrate();}closeTools();
     addStars(1);save();return;
   }
   // 被宝宝拖走的病人：拖到病床上就算上床；拖出医院就回来接着排队
@@ -4436,8 +4442,8 @@ function clinicStep(dt,t){
     if(drag&&drag.it===k)continue;
     const b=brain(k);b.scn=true;
     if(k.h&&st.some(s=>s.id===k.h)){
-      if(k.cl.st!=='seat'){k.cl.st='seat';k.cl.seat=k.h;setWalk(k,false);refresh(k);if(segVisible('hospital')&&!VOX.res)say(['sick_'+k.sick]);}
-      if(Math.random()<dt*.3)emote(k,SICK_EMO[k.sick]);continue;
+      if(k.cl.st!=='seat'){k.cl.st='seat';k.cl.seat=k.h;setWalk(k,false);refresh(k);if(segVisible('hospital')&&!VOX.res)say([k.dx?'sick_'+k.sick:'sick_unk']);}
+      if(Math.random()<dt*.3)emote(k,k.dx?SICK_EMO[k.sick]:'😣');continue;
     }
     if(k.h)getOff(k);
     k.cl.st='go';
@@ -4452,7 +4458,7 @@ function clinicStep(dt,t){
     }
     const q=queueSpot(qi++),far=Math.abs(k.x-q.x);
     moveToward(k,q.x,clampY(k,q.y),dt,far>1200?1000:far>400?280:150);
-    if(far<40&&Math.random()<dt*.15)emote(k,SICK_EMO[k.sick]);
+    if(far<40&&Math.random()<dt*.15)emote(k,k.dx?SICK_EMO[k.sick]:'😣');
   }
   // 穿医生服的小动物在医院：自己去给床上的病人看病
   const doc=items().find(o=>o.k==='a'&&o.acc&&o.acc.body==='doctor'&&segOf(o)===seg&&!o.h&&!(drag&&drag.it===o)&&!SC.doctor);
@@ -4560,6 +4566,53 @@ function treatPick(id,btn){
 $('#treatBody').addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(b&&!b.disabled)treatPick(b.dataset.tr,b);});
 $('#treatClose').onclick=()=>{closeTreat();stopVO();};
 
+
+/* ================= 看病工具栏：把检查工具、药品拖到生病的小朋友身上 ================= */
+const TOOL={};
+EXAMS.forEach(x=>TOOL['ex_'+x.id]={...x,kind:'exam'});
+CURES.forEach(x=>TOOL['cu_'+x.id]={...x,kind:'cure'});
+CATS.splice(CATS.findIndex(c=>c.id==='med')+1,0,{id:'tools',ic:'🧰',n:'看病',c:'#DDF0FF'});
+function toolArt(k,big){const d=TOOL[k];return C(0,0,46,d.kind==='exam'?'#DDF0FF':'#FFE3EC','stroke-width="4"')
+  +`<text x="0" y="${big?20:19}" text-anchor="middle" font-size="56" stroke="none">${d.ic}</text>`;}
+function toolThumb(k){return `<svg viewBox="-56 -56 112 112"><g stroke="${O}" stroke-width="4">${toolArt(k)}</g></svg>`;}
+// 打开下面的看病工具栏
+let toolPrevCat=null;
+function openTools(){
+  if(state.cat==='tools'&&!state.trayHidden)return;
+  if(state.cat!=='tools')toolPrevCat=state.cat;
+  state.cat='tools';state.trayHidden=false;renderTray();
+}
+function closeTools(){if(state.cat==='tools'){state.cat=toolPrevCat||'med';renderTray();}}
+// 点一下生病的小朋友：说不舒服，提示用下面的工具
+let toolHintN=0;
+function sickTap(p){
+  pauseBrain(p,6);tbOpen=false;placeToolbar();anim(p.id,'wiggle');sfx.pop();openTools();
+  emote(p,p.dx?({tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'}[p.sick]):'😣');
+  say(p.dx?['sick_'+p.sick]:(toolHintN++<3?['sick_unk','tool_hint']:['sick_unk']));
+}
+// 拖到小朋友身上
+function applyTool(a,k){
+  const d=TOOL[k],L=layout[a.id]||{x:a.x,y:a.y,S:1};if(!d)return;
+  pauseBrain(a,6);emote(a,d.ic);anim(a.id,'wiggle');
+  if(a.role||!a.sick){
+    if(d.id==='thermo')fxText(L.x,L.y-210*L.S,'36.5°','#4F8DF5');
+    sfx.pick();say(['tool_healthy']);return;
+  }
+  if(d.kind==='exam'){
+    if(d.finds.includes(a.sick)){
+      a.dx=true;refresh(a);sfx.sparkle();const g=DIAG[a.sick];
+      setTimeout(()=>{const l=layout[a.id]||L;fxText(l.x,l.y-220*l.S,g.txt,'#FF5A6E');emote(a,g.ic);},500);
+      say(['diag_'+a.sick]);
+    }else{sfx.pop();say(['exam_none']);}
+    return;
+  }
+  if(!a.dx){sfx.pop();say(['need_exam']);return;}
+  if(d.for.includes(a.sick)){
+    sfx.sparkle();say(['treat_'+a.sick]);
+    setTimeout(()=>{const l=layout[a.id]||L;cureKid(a);anim(a.id,'jump');fx(l.x,l.y-120*l.S,'confetti',16);setTimeout(()=>say(['pp_heal']),300);},1300);
+  }else{sfx.pop();say(['treat_wrong']);}
+}
+
 /* ================= 开始 ================= */
 RAIL.addEventListener('change',()=>renderTray());
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -4570,7 +4623,7 @@ if((state.v||0)<3){
   for(const id of ['soccer','basket']){const seg=roomIdx(id);state.world=items().filter(i=>segOf(i)!==seg).concat(shiftTo(reid(presets()[id]),id));}
   state.v=3;save();
 }
-items().forEach(i=>{if(i.hidden){i.hidden=false;i.auto=true;}i.behind=null;i.nap=false;i.fire=false;i.knocked=false;i.sick=null;i.stolen=false;delete i.cl;});
+items().forEach(i=>{if(i.hidden){i.hidden=false;i.auto=true;}i.behind=null;i.nap=false;i.fire=false;i.knocked=false;i.sick=null;i.stolen=false;delete i.cl;delete i.dx;});
 state.world=items().filter(i=>!i.temp);
 for(const who in ADULT)if(!items().some(i=>i.role==='adult'&&i.who===who)){const d=ADULT[who];items().push(AD(who,roomIdx(d.room)*SEG+rnd(500,1100),830));}
 if((state.v||0)<5){dedupeKids();setupOwned();state.v=5;save();}
