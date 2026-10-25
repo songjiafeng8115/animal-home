@@ -653,7 +653,7 @@ function animalArt(t,ci,o={}){
   if(CL&&CL.hat&&!(acc.head&&ACC[acc.head])) s+=`<g transform="translate(0 ${hy+10})">${CL.hat()}</g>`;
   if(acc.head&&ACC[acc.head]){const d=ACC[acc.head];s+=`<g transform="translate(${d.dx} ${hy+d.dy}) rotate(${d.rot||0})">${d.art()}</g>`;}
   if(o.label)s+=adultLabel(o.label,o.flip);
-  if(o.sick)s+=`<text x="34" y="${hy+6}" text-anchor="middle" font-size="40" stroke="none">${{tummy:'🤢',tooth:'🦷',leg:'🦵'}[o.sick]}</text>`+(o.sick==='leg'?R(-30,-22,22,14,4,'#FFFFFF','stroke-width="2.5"'):o.sick==='tooth'?P('M -54 -96 Q -60 -80 -48 -76 Q -44 -92 -54 -96 Z','#FFFFFF','stroke-width="2.5"'):'');
+  if(o.sick)s+=`<text x="34" y="${hy+6}" text-anchor="middle" font-size="40" stroke="none">${{tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'}[o.sick]}</text>`+(o.sick==='leg'?R(-30,-22,22,14,4,'#FFFFFF','stroke-width="2.5"'):o.sick==='tooth'?P('M -54 -96 Q -60 -80 -48 -76 Q -44 -92 -54 -96 Z','#FFFFFF','stroke-width="2.5"'):'');
   if(acc.body==='raincoat')s+=`<g transform="translate(0 ${hy-90})" pointer-events="none">${cloudNS(0,0,.9,'#C9D3E0')}${[-36,-14,8,30].map((x,i)=>L(`M ${x} 14 L ${x-4} 30`,4,'#7AC7F0',`class="drop" style="animation-delay:${i*.18}s"`)).join('')}</g>`;
   if(o.crown)s+=`<text x="0" y="${hy-(acc.head?52:2)}" text-anchor="middle" font-size="44" stroke="none">👑</text>`;
   return s;
@@ -1036,8 +1036,8 @@ function presets(){return {
   hide:[T('seekpost',800,640),T('hbush',260,700),T('hbox',600,820),T('hbarrel',1040,700),T('hbush',1360,830,{c:1}),T('tree',1520,640),
     A('cat',460,660),A('pig',900,860),A('chick',1200,760)],
   police:[T('jail',1300,700),T('table',600,780),T('chair',450,790,{c:2}),T('plant',150,650,{c:2})],
-  hospital:[T('clinicbed',520,740),T('clinicbed',1000,740,{c:1}),T('medcab',1420,640),T('plant',160,650,{c:3}),
-    T('eyechart',470,290),T('xray',1110,340),T('dentalchair',1230,700),T('wheelchair',300,860),T('scale',760,880),T('medkit',1450,870)],
+  hospital:[T('clinicbed',520,740),T('clinicbed',1000,740,{c:1}),T('medcab',1420,640),T('plant',70,640,{c:3}),
+    T('clinicdesk',200,740),T('eyechart',470,290),T('xray',1110,340),T('dentalchair',1230,700),T('wheelchair',300,860),T('scale',760,880),T('medkit',1450,870)],
   firestation:[T('firetruck',800,770),T('fence',1450,620,{c:2})],
 };}
 
@@ -1276,7 +1276,7 @@ function tap(it){
     if(!it.role&&!story)setTimeout(()=>emote(it,'🌸'+(it.score??3)),350);
     if(!quiet)setTimeout(()=>talk(['an_'+it.t]),450);return;}
   if(!story){
-    const dd=def(it),game=(HS&&(isHideSpot(it)||COVER.has(it.t)))||['maze','seek','serve','heal','med'].includes(dd.tap);
+    const dd=def(it),game=(HS&&(isHideSpot(it)||COVER.has(it.t)))||['maze','seek','serve','heal','med','clinic'].includes(dd.tap);
     if(game){tbOpen=false;placeToolbar();}
     if(HS&&seekTap(it))return;
     if(dd.tap==='maze'){openMaze();return;}
@@ -1284,6 +1284,7 @@ function tap(it){
     if(dd.tap==='serve'){serveTap(it);return;}
     if(dd.tap==='heal'){healTap(it);return;}
     if(dd.tap==='med'){medTap(it);return;}
+    if(dd.tap==='clinic'){clinicStart(it);return;}
   }
   const d=def(it);if(!quiet)talk(['th_'+it.t]);
   if(d.tap==='toggle'){it.o=!it.o;save();render();sfx.click();if(it.o)fx(L.x,L.y-200*L.S,'star',5);return;}
@@ -2287,7 +2288,7 @@ function physStep(dt){
 let rafLast=0;
 function lifeTick(ts,maxDt=.05){
   const t=ts/1000,dt=Math.min(maxDt,t-(lifeLast||t));lifeLast=t;
-  if(!document.hidden){try{camStep(dt);physStep(dt);schedStep(dt,t);lessonStep(t);subStep(t);scenarioTick(dt,t);lifeStep(dt,t);matchStep(dt,t);seekHint(t);}catch(e){console.error(e);}}
+  if(!document.hidden){try{camStep(dt);physStep(dt);schedStep(dt,t);lessonStep(t);subStep(t);scenarioTick(dt,t);clinicStep(dt,t);lifeStep(dt,t);matchStep(dt,t);seekHint(t);}catch(e){console.error(e);}}
 }
 function lifeLoop(ts){rafLast=performance.now();lifeTick(ts);requestAnimationFrame(lifeLoop);}
 // 保底：逐帧刷新被浏览器暂停时，用定时器按真实时间继续推动
@@ -3078,6 +3079,7 @@ async function healTap(it){
   if(doc){pauseBrain(doc,4);anim(doc.id,'hop');emote(doc,'💉');}
   await say(['pp_doctor']);
   if(!getItem(p.id)||p.h!==it.id)return;
+  if(p.sick){cureKid(p);return;}
   getOff(p);const b=brain(p);b.st='idle';b.until=nowS()+3;anim(p.id,'jump');
   const L=layout[p.id];if(L)fx(L.x,L.y-150*L.S,'heart',8);emote(p,'💖');say(['pp_heal']);
 }
@@ -3905,7 +3907,7 @@ Object.assign(TH,{
   jail:{n:'牢房',cat:'home',box:[-140,-260,280,265],colors:['#9D97A8'],seats:[{x:0,y:-40,m:'sit'}],
     art:c=>({b:R(-130,-250,260,250,10,'#5E5A6B')+R(-120,-240,240,230,6,'#6E6878',NS),
       f:R(-136,-256,272,18,6,c)+R(-136,-14,272,14,6,c)+[-110,-74,-38,-2,34,70,106].map(x=>R(x-4,-240,8,226,4,c)).join('')+R(-136,-130,272,10,4,c)})},
-  medcab:{n:'药柜',cat:'home',box:[-80,-260,160,265],colors:['#FFFFFF'],
+  medcab:{n:'药柜',cat:'home',tap:'med',box:[-80,-260,160,265],colors:['#FFFFFF'],
     art:c=>R(-74,-250,148,250,14,c)+R(-62,-236,124,100,8,'#E6F6FF','stroke-width="3"')+R(-8,-224,16,56,3,'#FF5A5A',NS)+R(-28,-204,56,16,3,'#FF5A5A',NS)
       +R(-62,-124,124,110,8,'#F4F0F6','stroke-width="3"')+[[-40,-100,'#FF8FA8'],[-10,-100,'#7AC7F0'],[20,-100,'#FFD166'],[-30,-56,'#8FD694'],[10,-56,'#C3A6FF']].map(([x,y,col])=>R(x,y,22,30,5,col,'stroke-width="2.5"')).join('')},
 });
@@ -4137,33 +4139,44 @@ const SCN={
   /* ---- 恐龙丛林 ---- */
   dino:{
     start(s,h,t){
-      const seg=segOf(h),x0=seg*SEG;s.seg=seg;
-      jungle(true);
-      const add=(type,x,y,o)=>{const n=spawnNPC(type,x0+x,y,o);n.scn='dino';return n.id;};
-      s.cave=add('caveman',300,800);s.trex=add('trex',1350,780,{s:.9});s.trike=add('trike',800,860,{s:.75});s.brach=add('brachio',560,600,{s:.8});s.ptero=add('ptero',900,560,{s:.8});
-      s.next=t+3;s.cx=x0+300;s.rest=0;
+      jungle(true);s.m={};s.ids=[];
+      const n=ROOMS.length,home=segOf(h),segs=[...Array(n).keys()].filter(i=>i!==home).sort(()=>Math.random()-.5);
+      const add=(type,seg,x,y,o)=>{const d=spawnNPC(type,seg*SEG+x,y,o);d.scn='dino';s.ids.push(d.id);s.m[d.id]={type,next:0};return d;};
+      // 穿恐龙装的那个场景马上就有霸王龙追野人；其余恐龙散在别的场景里各走各的
+      add('caveman',home,300,800);add('trex',home,1350,780,{s:.9});
+      const rest=[['caveman',800,{}],['trex',780,{s:.9}],['trike',860,{s:.75}],['trike',860,{s:.75}],['brachio',640,{s:.8}],['brachio',640,{s:.8}],['ptero',560,{s:.8}],['ptero',560,{s:.8}]];
+      rest.forEach(([type,y,o],i)=>add(type,segs[i%segs.length],rnd(250,1350),y,o));
       say(['sc_dino']);sfx.roar();
     },
     step(s,dt,t){
-      // 所有场景都是丛林；恐龙一群跟着镜头走到正在看的那个场景
-      const cs=clamp(Math.floor((camX+viewW/2)/SEG),0,ROOMS.length-1);
-      if(cs!==s.seg){if(t>(s.segT||0)){const dx=(cs-s.seg)*SEG;
-          for(const id of [s.cave,s.trex,s.trike,s.brach,s.ptero]){const n=getItem(id);if(n){n.x+=dx;placeNode(n);}}
-          s.cx+=dx;s.tkx=null;s.tkT=0;s.seg=cs;}}
-      else s.segT=t+.8;
-      const x0=s.seg*SEG,cv=getItem(s.cave),tr=getItem(s.trex),tk=getItem(s.trike),pt=getItem(s.ptero);
-      // 翼龙：在天上飞来飞去
-      if(pt){FLY[pt.id]=200+Math.sin(t*1.5)*40;const tx=x0+800+Math.sin(t*.25)*600;pt.f=Math.cos(t*.25)>0;pt.x+=(tx-pt.x)*Math.min(1,dt*.8);placeNode(pt);}
-      // 三角龙：慢慢吃草
-      if(tk){if(t>(s.tkT||0)){s.tkT=t+rnd(4,8);s.tkx=x0+rnd(300,1300);}moveToward(tk,s.tkx,860,dt,40);}
-      // 霸王龙追野人，野人逃跑
-      if(tr&&cv){
-        if(t<s.rest){return;}
-        if(dist(tr,cv)<190){s.rest=t+3;anim(tr.id,'jump');sfx.roar();emote(cv,'😱');
-          s.cx=cv.x<x0+800?x0+1400:x0+200;if(visX(cv.x)&&!VOX.res)say(Math.random()<.5?['sc_trex']:['sc_caveman']);return;}
-        moveToward(tr,cv.x,cv.y,dt,120);
-        if(Math.abs(cv.x-s.cx)<60)s.cx=cv.x<x0+800?x0+1400:x0+200;
-        moveToward(cv,s.cx,clampY(cv,780+Math.sin(t)*60),dt,dist(tr,cv)<500?190:90);
+      const W=WORLD_W(),list=s.ids.map(getItem).filter(Boolean),SP={caveman:75,trex:90,trike:45,brachio:38,ptero:150};
+      const pick=(n,m,far)=>{m.tx=clamp(n.x+rnd(-1,1)*SEG*(far||1.3),120,W-120);m.next=t+rnd(8,16);
+        m.ty=m.type==='brachio'?rnd(620,700):m.type==='ptero'?560:rnd(760,880);};
+      for(const n of list){
+        const m=s.m[n.id];if(!m)continue;
+        if(drag&&drag.it===n)continue;
+        if(m.type==='ptero'){
+          if(m.tx==null||t>m.next||Math.abs(n.x-m.tx)<40)pick(n,m,2.2);
+          FLY[n.id]=200+Math.sin(t*1.5+n.x*.01)*40;const dx=m.tx-n.x;n.f=dx>0;n.x+=Math.sign(dx)*Math.min(Math.abs(dx),SP.ptero*dt);placeNode(n);continue;
+        }
+        if(m.rest&&t<m.rest)continue;
+        if(m.type==='trex'){
+          // 同一个场景里看到野人就追
+          const cv=list.find(o=>s.m[o.id]&&s.m[o.id].type==='caveman'&&segOf(o)===segOf(n)&&Math.abs(o.x-n.x)<700);
+          if(cv){
+            if(dist(n,cv)<170){m.rest=t+3;anim(n.id,'jump');if(visX(n.x))sfx.roar();emote(cv,'😱');
+              const cm=s.m[cv.id];cm.tx=clamp(cv.x+(cv.x<n.x?-1:1)*rnd(700,1100),120,W-120);cm.flee=t+6;
+              if(visX(cv.x)&&!VOX.res)say(Math.random()<.5?['sc_trex']:['sc_caveman']);continue;}
+            moveToward(n,cv.x,cv.y,dt,140);continue;
+          }
+        }
+        if(m.type==='caveman'){
+          const tr=list.find(o=>s.m[o.id]&&s.m[o.id].type==='trex'&&segOf(o)===segOf(n)&&Math.abs(o.x-n.x)<500);
+          if(tr&&!(m.flee>t)){m.tx=clamp(n.x+(n.x<tr.x?-1:1)*rnd(600,900),120,W-120);m.flee=t+5;}
+          if(m.flee>t){moveToward(n,m.tx,clampY(n,800),dt,200);continue;}
+        }
+        if(m.tx==null||t>m.next||Math.abs(n.x-m.tx)<30){pick(n,m);if(m.type==='trike'&&Math.random()<.4)emote(n,'🌿');}
+        moveToward(n,m.tx,clampY(n,m.ty),dt,SP[m.type]);
       }
     },
     stop(s,ok){jungle(false);},
@@ -4319,7 +4332,8 @@ CATS.splice(4,0,{id:'med',ic:'🩺',n:'医院',c:'#D8F2EA'});
 function medPatient(it){
   const on=items().find(o=>o.h===it.id&&o.k==='a');if(on)return on;
   let best=null,bd=280;
-  for(const o of items()){if(o.k!=='a'||o.hidden||o.h||(def(o)&&def(o).npc))continue;const d=Math.hypot(o.x-it.x,(o.y-it.y)*1.5);if(d<bd){bd=d;best=o;}}
+  for(const o of items()){if(o.k!=='a'||o.hidden||(def(o)&&def(o).npc))continue;const l=o.h?(layout[o.id]||o):o;
+    const d=Math.hypot(l.x-it.x,(l.y-it.y)*1.5)-(o.sick?60:0);if(d<bd){bd=d;best=o;}}
   return best;
 }
 function cureKid(p){
@@ -4330,7 +4344,10 @@ const KG={cat:12,dog:16,bunny:9,bear:28,panda:30,chick:6,pig:22,frog:7,fox:14,sh
 function medTap(it){
   const L=layout[it.id]||{x:it.x,y:it.y,S:1},p=medPatient(it);
   if(it.t==='xray'){it.o=!it.o;save();render();sfx.click();if(it.o)say(['med_xray']);return;}
-  if(it.t==='medkit'){it.o=!it.o;save();render();if(it.o){sfx.sparkle();fx(L.x,L.y-100*L.S,'star',6);say(['th_medkit']);}else sfx.pick();return;}
+  if(it.t==='medkit'){it.o=!it.o;save();render();if(it.o){sfx.sparkle();fx(L.x,L.y-100*L.S,'star',6);
+      if(p&&p.sick){emote(p,'🩹');say(['med_bandage']);setTimeout(()=>cureKid(p),1400);}else say(['th_medkit']);}else sfx.pick();return;}
+  if(it.t==='medcab'){anim(it.id,'wiggle');sfx.pop();
+    if(p&&p.sick){emote(p,'💊');say(['med_pill']);setTimeout(()=>{cureKid(p);sfx.sparkle();},1600);}else talk(['th_medcab']);return;}
   if(it.t==='ambulance'){it.o=true;save();render();anim(it.id,'hop');sfx.siren();say(['med_ambulance']);
     setTimeout(()=>{const a=getItem(it.id);if(a){a.o=false;save();refresh(a);}},6000);return;}
   if(!p){anim(it.id,'wiggle');talk(['th_'+it.t]);return;}
@@ -4353,6 +4370,91 @@ function medTap(it){
   }else{anim(it.id,'wiggle');talk(['th_'+it.t]);}
 }
 
+
+/* ================= 医院看诊：点挂号台的铃，小朋友排队来看病 ================= */
+Object.assign(TH,{
+  clinicdesk:{n:'挂号台',cat:'med',tap:'clinic',box:[-130,-250,260,256],colors:['#FFFFFF','#D8F2EA'],
+    art:(c,it)=>R(-120,-150,240,150,16,c)+R(-120,-160,240,24,12,'#7AC7F0')+R(-100,-118,200,90,12,'#F4FBFF','stroke-width="3"')
+      +R(-16,-104,32,60,4,'#FF5A6E',NS)+R(-38,-86,76,24,4,'#FF5A6E',NS)
+      // 大铃铛：一眼就知道点这里
+      +`<g class="${CLINIC?'':'bellBob'}">${P('M 40 -168 Q 40 -226 74 -226 Q 108 -226 108 -168 Z','#FFD166')+R(30,-172,88,10,5,'#F2B600')+C(74,-232,8,'#F2B600')+C(74,-160,7,'#F2B600')}</g>`
+      +(CLINIC?`<text x="-60" y="-178" text-anchor="middle" font-size="40" stroke="none">🩺</text>`:'')},
+});
+(function(){const st=document.createElement('style');st.textContent=`.bellBob{animation:bellBob 1.2s ease-in-out infinite;transform-origin:74px -232px}@keyframes bellBob{0%,70%,100%{transform:rotate(0)}78%{transform:rotate(-14deg)}86%{transform:rotate(12deg)}94%{transform:rotate(-6deg)}}`;document.head.appendChild(st);})();
+let CLINIC=null;
+const SICKS=['tummy','tooth','leg','fever','cold'];
+const SICK_EMO={tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'};
+const clinicSeg=()=>roomIdx('hospital');
+// 排队的位置：病床前面的走廊，一个挨一个
+const queueSpot=i=>({x:clinicSeg()*SEG+300+i*108,y:808});
+const stations=()=>items().filter(i=>(i.t==='clinicbed'||i.t==='dentalchair')&&segOf(i)===clinicSeg());
+function clinicStart(desk){
+  if(CLINIC){const n=CLINIC.q.length;anim(desk.id,'wiggle');if(n)say(['clinic_busy']);return;}
+  const t=nowS(),pool=kids().filter(k=>!(drag&&drag.it===k)&&!BR[k.id]?.scn&&!BR[k.id]?.sport&&!BR[k.id]?.subOf&&!k.sick);
+  const n=Math.min(pool.length,7+(Math.random()<.5?1:0));if(!n)return;
+  // 离医院近的先到
+  const pts=pool.sort(()=>Math.random()-.5).slice(0,n).sort((a,b)=>Math.abs(a.x-desk.x)-Math.abs(b.x-desk.x));
+  CLINIC={q:[],total:n,done:0,t0:t};
+  pts.forEach((k,i)=>{const b=brain(k);if(k.h)getOff(k);k.nap=false;b.scn=true;b.task=null;b.naughty=false;b.st='idle';
+    k.sick=SICKS[(i+Math.random()*5|0)%SICKS.length];k.cl={st:'go',seat:null};refresh(k);CLINIC.q.push(k.id);});
+  sfx.bell();anim(desk.id,'jump');refresh(desk);say(['clinic_open']);
+}
+function clinicLeave(k,cured){
+  const b=brain(k);if(k.h)getOff(k);b.scn=false;b.st='idle';b.until=nowS()+2;k.cl=null;k.sick=null;setWalk(k,false);refresh(k);
+  if(cured){emote(k,'👋');k.score=(k.score??3)+1;k.today=(k.today||0)+1;}
+}
+function clinicStep(dt,t){
+  if(!CLINIC)return;
+  const seg=clinicSeg(),st=stations();
+  const pts=CLINIC.q.map(getItem).filter(Boolean);
+  // 治好了：下床、挥手、离开，叫下一位
+  for(const k of pts)if(!k.sick){clinicLeave(k,true);CLINIC.done++;CLINIC.q=CLINIC.q.filter(id=>id!==k.id);
+    if(CLINIC.q.length&&segVisible('hospital'))setTimeout(()=>say(['clinic_next']),900);}
+  const left=CLINIC.q.map(getItem).filter(Boolean);
+  if(!left.length){
+    CLINIC=null;const d=items().find(i=>i.t==='clinicdesk');if(d)refresh(d);
+    if(segVisible('hospital')){say(['clinic_done']);celebrate();}
+    addStars(1);save();return;
+  }
+  // 被宝宝拖走的病人：拖到病床上就算上床；拖出医院就回来接着排队
+  const busy=new Set(items().filter(o=>o.h&&st.some(s=>s.id===o.h)).map(o=>o.h));
+  let qi=0;
+  for(const k of left){
+    if(drag&&drag.it===k)continue;
+    const b=brain(k);b.scn=true;
+    if(k.h&&st.some(s=>s.id===k.h)){
+      if(k.cl.st!=='seat'){k.cl.st='seat';k.cl.seat=k.h;setWalk(k,false);refresh(k);if(segVisible('hospital')&&!VOX.res)say(['sick_'+k.sick]);}
+      if(Math.random()<dt*.3)emote(k,SICK_EMO[k.sick]);continue;
+    }
+    if(k.h)getOff(k);
+    k.cl.st='go';
+    // 有空床就去床上（牙疼的先去牙医椅）
+    let tgt=null;
+    const free=st.filter(s=>!busy.has(s.id));
+    if(free.length&&qi===0){tgt=(k.sick==='tooth'&&free.find(s=>s.t==='dentalchair'))||free.find(s=>s.t==='clinicbed')||free[0];}
+    if(tgt){
+      const p=seatPos(tgt,0),hS=tgt.s*depth(tgt),tx=p.x,ty=clampY(k,tgt.y+18*hS);
+      if(Math.hypot(k.x-tx,(k.y-ty)*1.5)<26){k.h=tgt.id;k.si=0;k.auto=true;b.st='seated';b.seatUntil=1e9;MV[k.id]=false;setWalk(k,false);busy.add(tgt.id);refresh(k);anim(k.id,'hop');continue;}
+      busy.add(tgt.id);moveToward(k,tx,ty,dt,Math.abs(k.x-tx)>1200?1000:220);continue;
+    }
+    const q=queueSpot(qi++),far=Math.abs(k.x-q.x);
+    moveToward(k,q.x,clampY(k,q.y),dt,far>1200?1000:far>400?280:150);
+    if(far<40&&Math.random()<dt*.15)emote(k,SICK_EMO[k.sick]);
+  }
+  // 穿医生服的小动物在医院：自己去给床上的病人看病
+  const doc=items().find(o=>o.k==='a'&&o.acc&&o.acc.body==='doctor'&&segOf(o)===seg&&!o.h&&!(drag&&drag.it===o)&&!SC.doctor);
+  if(doc){
+    const pt=left.find(k=>k.cl&&k.cl.st==='seat');
+    if(!pt){CLINIC.dt=null;return;}
+    const L=layout[pt.id]||pt,tx=L.x+(doc.x<L.x?-1:1)*120,ty=clampY(doc,(L.y||pt.y)+20);
+    brain(doc).scn=true;pauseBrain(doc,3);
+    if(Math.hypot(doc.x-tx,(doc.y-ty)*1.5)>30){moveToward(doc,tx,ty,dt,240);CLINIC.dt=null;return;}
+    setWalk(doc,false);MV[doc.id]=false;
+    if(!CLINIC.dt||CLINIC.dpt!==pt.id){CLINIC.dt=t+3.5;CLINIC.dpt=pt.id;emote(doc,{tummy:'💊',tooth:'🪥',leg:'🩹',fever:'💉',cold:'🍵'}[pt.sick]);anim(doc.id,'hop');}
+    else if(t>CLINIC.dt){CLINIC.dt=null;cureKid(pt);}
+  }else{for(const o of items())if(o.k==='a'&&o.acc&&o.acc.body==='doctor'&&BR[o.id]&&BR[o.id].scn&&!SC.doctor&&!(CLINIC.q.includes(o.id)))BR[o.id].scn=false;}
+}
+
 /* ================= 开始 ================= */
 RAIL.addEventListener('change',()=>renderTray());
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -4363,7 +4465,7 @@ if((state.v||0)<3){
   for(const id of ['soccer','basket']){const seg=roomIdx(id);state.world=items().filter(i=>segOf(i)!==seg).concat(shiftTo(reid(presets()[id]),id));}
   state.v=3;save();
 }
-items().forEach(i=>{if(i.hidden){i.hidden=false;i.auto=true;}i.behind=null;i.nap=false;i.fire=false;i.knocked=false;i.sick=null;i.stolen=false;});
+items().forEach(i=>{if(i.hidden){i.hidden=false;i.auto=true;}i.behind=null;i.nap=false;i.fire=false;i.knocked=false;i.sick=null;i.stolen=false;delete i.cl;});
 state.world=items().filter(i=>!i.temp);
 for(const who in ADULT)if(!items().some(i=>i.role==='adult'&&i.who===who)){const d=ADULT[who];items().push(AD(who,roomIdx(d.room)*SEG+rnd(500,1100),830));}
 if((state.v||0)<5){dedupeKids();setupOwned();state.v=5;save();}
@@ -4382,6 +4484,12 @@ if((state.v||0)<10){
   for(const t of presets().hospital)if(['eyechart','xray','dentalchair','wheelchair','scale','medkit'].includes(t.t)&&!items().some(i=>i.t===t.t&&segOf(i)===hs)){
     items().push(shiftTo(reid([t]),'hospital')[0]);}
   state.v=10;save();
+}
+if((state.v||0)<11){
+  const hs=roomIdx('hospital');
+  if(!items().some(i=>i.t==='clinicdesk'&&segOf(i)===hs))items().push(shiftTo(reid([T('clinicdesk',200,740)]),'hospital')[0]);
+  const pl=items().find(i=>i.t==='plant'&&segOf(i)===hs&&Math.abs(i.x-(hs*SEG+160))<30);if(pl)pl.x=hs*SEG+70;
+  state.v=11;save();
 }
 if((state.v||0)<7){state.match.soccer={red:0,blue:0};state.match.basket={red:0,blue:0};state.v=7;save();}
 if((state.v||0)<8){
