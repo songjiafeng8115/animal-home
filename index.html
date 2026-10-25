@@ -3992,13 +3992,19 @@ const SCN={
   dino:{
     start(s,h,t){
       const seg=segOf(h),x0=seg*SEG;s.seg=seg;
-      jungle(seg);
+      jungle(true);
       const add=(type,x,y,o)=>{const n=spawnNPC(type,x0+x,y,o);n.scn='dino';return n.id;};
       s.cave=add('caveman',300,800);s.trex=add('trex',1350,780,{s:.9});s.trike=add('trike',800,860,{s:.75});s.brach=add('brachio',560,600,{s:.8});s.ptero=add('ptero',900,560,{s:.8});
       s.next=t+3;s.cx=x0+300;s.rest=0;
       say(['sc_dino']);sfx.roar();
     },
     step(s,dt,t){
+      // 所有场景都是丛林；恐龙一群跟着镜头走到正在看的那个场景
+      const cs=clamp(Math.floor((camX+viewW/2)/SEG),0,ROOMS.length-1);
+      if(cs!==s.seg){if(t>(s.segT||0)){const dx=(cs-s.seg)*SEG;
+          for(const id of [s.cave,s.trex,s.trike,s.brach,s.ptero]){const n=getItem(id);if(n){n.x+=dx;placeNode(n);}}
+          s.cx+=dx;s.tkx=null;s.tkT=0;s.seg=cs;}}
+      else s.segT=t+.8;
       const x0=s.seg*SEG,cv=getItem(s.cave),tr=getItem(s.trex),tk=getItem(s.trike),pt=getItem(s.ptero);
       // 翼龙：在天上飞来飞去
       if(pt){FLY[pt.id]=200+Math.sin(t*1.5)*40;const tx=x0+800+Math.sin(t*.25)*600;pt.f=Math.cos(t*.25)>0;pt.x+=(tx-pt.x)*Math.min(1,dt*.8);placeNode(pt);}
@@ -4014,7 +4020,7 @@ const SCN={
         moveToward(cv,s.cx,clampY(cv,780+Math.sin(t)*60),dt,dist(tr,cv)<500?190:90);
       }
     },
-    stop(s,ok){jungle(-1);},
+    stop(s,ok){jungle(false);},
   },
   /* ---- 消防员开消防车去灭火 ---- */
   fireman:{
@@ -4088,16 +4094,16 @@ function xmas(on){
   $('#weatherL').innerHTML=on?`<rect x="0" y="${FL+6}" width="${WORLD_W()}" height="${900-FL}" fill="#FFFFFF" opacity=".42"/>`
     +Array.from({length:ROOMS.length*6},(_,i)=>E(i*SEG/6+rnd(0,200),FL+rnd(20,380),rnd(40,90),rnd(8,14),'#FFFFFF',NS+' opacity=".75"')).join(''):'';
 }
-// 恐龙丛林：只盖住穿恐龙装的小动物所在的那一个场景
-function jungle(seg){
-  if(seg<0){$('#jungleL').innerHTML='';return;}
+// 恐龙丛林：所有场景都变成丛林
+function jungle(on){
+  if(!on){$('#jungleL').innerHTML='';return;}
   let s=R(0,0,1600,FL,0,'#4E9A5A',NS+' opacity=".55"');
   s+=P(`M 900 ${FL} L 1150 120 L 1220 120 L 1470 ${FL} Z`,'#8E6A54',NS)+P('M 1150 120 L 1185 150 L 1220 120 Z','#FF7A3D',NS)
     +C(1185,90,40,'#C9C2CC',NS+' class="steam" style="animation-duration:4s"')+C(1215,50,30,'#C9C2CC',NS+' class="steam" style="animation-delay:1.5s;animation-duration:4s"');
   for(let i=0;i<8;i++){const x=80+i*200;s+=L(`M ${x} 0 Q ${x+40} 120 ${x-10} ${200+i%3*60}`,6,'#3E7A46')+E(x-10,200+i%3*60,16,9,'#6CC17A',NS);}
   s+=[[-40,40,140,80,-30],[1640,40,140,80,30],[-30,FL-60,120,70,20],[1630,FL-60,120,70,-20]].map(([x,y,rx,ry,rot])=>E(x,y,rx,ry,'#5FB07A',`stroke-width="4" transform="rotate(${rot} ${x} ${y})"`)).join('')
     +[[160,FL+40],[520,FL+30],[1100,FL+50],[1480,FL+30]].map(([x,y])=>P(`M ${x} ${y} Q ${x-40} ${y-80} ${x-70} ${y-60} M ${x} ${y} Q ${x} ${y-100} ${x+10} ${y-110} M ${x} ${y} Q ${x+40} ${y-80} ${x+70} ${y-60}`,'none','stroke="#4E9A5A" stroke-width="10" stroke-linecap="round"')).join('');
-  $('#jungleL').innerHTML=`<g transform="translate(${seg*SEG} 0)"><g clip-path="url(#segClip)">${s}</g></g>`;
+  $('#jungleL').innerHTML=`<defs><g id="jgTpl">${s}</g></defs>`+ROOMS.map((r,i)=>`<g transform="translate(${i*SEG} 0)"><g clip-path="url(#segClip)"><use href="#jgTpl"/></g></g>`).join('');
 }
 
 /* ================= 开始 ================= */
