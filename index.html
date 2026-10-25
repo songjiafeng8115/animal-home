@@ -1995,7 +1995,7 @@ function brain(it){if(it.home==null)it.home=segOf(it);return BR[it.id]||(BR[it.i
 function cacheNodes(){
   NODES=new Map();
   stage.querySelectorAll('#mainL [data-id]').forEach(e=>{if(!NODES.has(e.dataset.id))NODES.set(e.dataset.id,e);});
-  for(const it of items()){const b=BR[it.id];if(b&&b.st==='walk')setWalk(it,true);}
+  for(const it of items()){const b=BR[it.id];if(b&&b.st==='walk'||MV[it.id])setWalk(it,true);}
 }
 function setWalk(it,on){
   const e=NODES.get(it.id),g=e&&e.querySelector('.idle');if(!g)return;
@@ -2012,11 +2012,11 @@ function placeNode(it){
 const depthT={};
 function fixDepth(it){
   if(FLY[it.id])return;
-  const t=nowS();if(depthT[it.id]&&t-depthT[it.id]<.3)return;depthT[it.id]=t;
+  const t=nowS();if(depthT[it.id]&&t-depthT[it.id]<.5)return;depthT[it.id]=t;
   const c=mainL.querySelector(`:scope > [data-cluster="${it.id}"]`);if(!c)return;
   const sibs=[...mainL.children],yOf=n=>{const o=getItem(n.dataset.cluster);return o?o.y:0;};
   const i=sibs.indexOf(c),prev=sibs[i-1],next=sibs[i+1];
-  if((prev&&yOf(prev)>it.y)||(next&&yOf(next)<it.y)){
+  if((prev&&yOf(prev)>it.y+8)||(next&&yOf(next)<it.y-8)){
     const before=sibs.find(n=>n!==c&&yOf(n)>it.y);mainL.insertBefore(c,before||null);
     const b=BR[it.id];if(b&&b.st==='walk')setWalk(it,true);
   }
@@ -2257,7 +2257,7 @@ $('#shopCards').addEventListener('click',e=>{
 
 /* ================= 英语小课堂 ================= */
 const UNITS=[
-  {id:'animals',n:'u_animals',ic:'🐾',c:'#FFE1C7',words:['cat','dog','rabbit','bear','panda','pig','duck','fox','frog','bird']},
+  {id:'animals',n:'u_animals',ic:'🐾',c:'#FFE1C7',words:['cat','dog','rabbit','bear','panda','pig','duck','fox','frog','bird','sheep','monkey','tiger','lion','elephant']},
   {id:'colors',n:'u_colors',ic:'🎨',c:'#FFD9E3',words:['red','yellow','blue','green','pink','orange','purple','white','black']},
   {id:'numbers',n:'u_numbers',ic:'🔢',c:'#D5ECFA',words:['one','two','three','four','five','six','seven','eight','nine','ten']},
   {id:'food',n:'u_food',ic:'🍎',c:'#DAF3D2',words:['apple','banana','cake','egg','milk','bread','juice','ice cream']},
@@ -2266,6 +2266,7 @@ const UNITS=[
   {id:'nature',n:'u_nature',ic:'🌳',c:'#CBE8F8',words:['sun','moon','star','tree','flower']},
 ];
 const WPIC={
+  sheep:'a:sheep',monkey:'a:monkey',tiger:'a:tiger',lion:'a:lion',elephant:'a:elephant',
   cat:'a:cat',dog:'a:dog',rabbit:'a:bunny',bear:'a:bear',panda:'a:panda',pig:'a:pig',fox:'a:fox',frog:'a:frog',duck:'t:duck',bird:'🐦',
   red:'#FF4D4D',yellow:'#FFD43B',blue:'#3D8BFF',green:'#4CC46B',pink:'#FF8FC8',orange:'#FF9A2E',purple:'#9B6BFF',white:'#FFFFFF',black:'#3A3540',
   apple:'🍎',banana:'🍌',cake:'t:cake',egg:'🥚',milk:'🥛',bread:'🍞',juice:'🧃','ice cream':'🍦',
@@ -2716,10 +2717,15 @@ state.match=state.match||{soccer:{red:0,blue:0},basket:{red:0,blue:0}};
 const MT={};
 let chantT=0;
 const segVisible=room=>{const s=roomIdx(room)*SEG;return camX<s+SEG-200&&camX+viewW>s+200;};
+const MV={};
 function moveToward(it,tx,ty,dt,sp){
-  const S=it.s*depth(it),dx=tx-it.x,dy=(ty-it.y)*1.5,d=Math.hypot(dx,dy),step=sp*S*dt,go=d>10;
-  setWalk(it,go);if(!go)return;
-  if(Math.abs(dx)>6)it.f=dx>0;
+  const S=it.s*depth(it),dx=tx-it.x,dy=(ty-it.y)*1.5,d=Math.hypot(dx,dy),step=sp*S*dt;
+  // 停下来以后，目标要离远一点才重新起步（不会一走一停地抖）
+  const was=!!MV[it.id],go=was?d>8:d>30;
+  if(go!==was){MV[it.id]=go;setWalk(it,go);}
+  if(!go)return;
+  // 要往反方向走出一段才转身
+  if(Math.abs(dx)>40&&(dx>0)!==!!it.f)it.f=dx>0;
   const k=Math.min(1,step/d);it.x+=dx*k;it.y=clampY(it,it.y+dy*k/1.5);placeNode(it);fixDepth(it);
 }
 function matchStep(dt,t){
@@ -3176,9 +3182,11 @@ function adultPost(a,ph,t,m){
   }
   if(who==='pe'){
     if(act==='pe')return {x:base('school')+800,y:600};
-    if(act==='match'){const bl=ballOf(ph.room),x0=base(ph.room);return {x:bl?clamp(bl.x+150,x0+100,x0+1500):x0+800,y:850};}
+    if(act==='match'){const bl=ballOf(ph.room),x0=base(ph.room);
+      // 裁判隔一会儿才换一次站位，不会一直跟着球左右转
+      if(t>(m.rt||0)||m.rx==null){m.rx=bl?clamp(bl.x+180,x0+120,x0+1480):x0+800;m.rt=t+1.2;}return {x:m.rx,y:858};}
     for(const r of Object.keys(SPORTS))if(segOf(a)===roomIdx(r)&&items().some(i=>BR[i.id]&&BR[i.id].sport===r)){
-      const bl=ballOf(r);if(bl)return {x:clamp(bl.x+150,roomIdx(r)*SEG+100,roomIdx(r)*SEG+1500),y:850};}
+      const bl=ballOf(r);if(bl){if(t>(m.rt||0)||m.rx==null){m.rx=clamp(bl.x+180,roomIdx(r)*SEG+120,roomIdx(r)*SEG+1480);m.rt=t+1.2;}return {x:m.rx,y:858};}}
     return wander(['soccer','basket','school','play']);
   }
   return null;
@@ -3253,7 +3261,7 @@ $('#boardClose').onclick=()=>{$('#board').hidden=true;stopVO();};
    宝宝：帮调皮鬼回去 +1⭐；一整天没打扰作息 +1⭐；打扰作息先提醒两次，同一时段第三次才 -1⭐
 */
 // 每个小动物在不同时段有多爱调皮（被批评过的当天会乖很多）
-const TEMPER={fox:{class:.45,pe:.1,eat:.1,sleep:.15},dog:{class:.3,eat:.05,sleep:.1},cat:{breakfast:.45,pe:.2,sleep:.05},
+const TEMPER={monkey:{class:.4,sleep:.15},tiger:{sleep:.3,pe:.1},lion:{breakfast:.35,pe:.15},sheep:{class:.05},elephant:{pe:.2,eat:.02},fox:{class:.45,pe:.1,eat:.1,sleep:.15},dog:{class:.3,eat:.05,sleep:.1},cat:{breakfast:.45,pe:.2,sleep:.05},
   bunny:{sleep:.45,class:.1},pig:{pe:.4,eat:.02},chick:{class:.25,sleep:.2},frog:{eat:.25,class:.1},bear:{breakfast:.35,pe:.25},panda:{pe:.15,class:.1,sleep:.05}};
 const MAX_PEN_DAY=3;
 const PS=()=>state.player||(state.player={strikes:0,good:true,penPh:null});
@@ -3353,8 +3361,8 @@ function daySummary(){
 }
 
 /* ================= 每个小朋友自己的床、餐椅、课桌 ================= */
-const KIDS=['cat','dog','bunny','bear','panda','chick','pig','frog','fox'];
-const EMO={cat:'🐱',dog:'🐶',bunny:'🐰',bear:'🐻',panda:'🐼',chick:'🐥',pig:'🐷',frog:'🐸',fox:'🦊'};
+const KIDS=['cat','dog','bunny','bear','panda','chick','pig','frog','fox','sheep','monkey','tiger','lion','elephant'];
+const EMO={cat:'🐱',dog:'🐶',bunny:'🐰',bear:'🐻',panda:'🐼',chick:'🐥',pig:'🐷',frog:'🐸',fox:'🦊',sheep:'🐑',monkey:'🐵',tiger:'🐯',lion:'🦁',elephant:'🐘'};
 const badge=(x,y,sp,size=30)=>sp?`<g transform="translate(${x} ${y})">${C(0,0,size*.7,'#FFFFFF','stroke-width="3"')}<text y="${size*.36}" text-anchor="middle" font-size="${size}" stroke="none">${EMO[sp]||''}</text></g>`:'';
 Object.assign(TH,{
   bunk:{n:'上下铺',cat:'home',box:[-140,-400,280,405],colors:['#FFB5C8','#A8D8F0','#FFE59A','#B8E6C9','#CDB8F0'],
@@ -3389,11 +3397,10 @@ function setupOwned(){
     ||(segOf(i)===cSeg&&i.t==='desk')||i.t==='bunk'||i.t==='longtable').map(i=>i.id));
   for(const it of items())if(it.h&&drop.has(it.h)){const h=getItem(it.h);it.h=null;it.si=null;it.x=clamp(h.x+rnd(-160,160),60,WORLD_W()-60);it.y=clampY(it,h.y+70);}
   state.world=items().filter(i=>!drop.has(i.id));
-  [[['cat','dog'],200],[['bunny','bear'],500],[['panda','chick'],800],[['pig','frog'],1100],[['fox'],1400]].forEach(([ow,x],i)=>{
-    const b=T('bunk',bSeg*SEG+x,700,{c:i%5});b.owners=ow;items().push(b);});
-  [[KIDS.slice(0,5),480],[KIDS.slice(5),1160]].forEach(([ow,x])=>{const t=T('longtable',kSeg*SEG+x,800);t.owners=ow;items().push(t);});
-  const pos=[[280,690],[520,690],[760,690],[1000,690],[1240,690],[400,830],[640,830],[880,830],[1120,830]];
-  KIDS.forEach((sp,i)=>{const d=T('desk',cSeg*SEG+pos[i][0],pos[i][1],{c:i%4});d.owner=sp;items().push(d);});
+  for(let i=0;i<KIDS.length;i+=2){const b=T('bunk',bSeg*SEG+120+(i/2)*220,700,{c:(i/2)%5,s:.82});b.owners=KIDS.slice(i,i+2);items().push(b);}
+  [0,5,10].forEach((st,i)=>{if(st>=KIDS.length)return;const t=T('longtable',kSeg*SEG+290+i*510,805,{s:.78});t.owners=KIDS.slice(st,st+5);items().push(t);});
+  const pos=[[200,715],[400,715],[600,715],[1000,715],[1200,715],[1400,715],[300,795],[500,795],[1100,795],[1300,795],[200,875],[400,875],[1200,875],[1400,875]];
+  KIDS.forEach((sp,i)=>{const d=T('desk',cSeg*SEG+pos[i][0],pos[i][1],{c:i%4,s:.82});d.owner=sp;items().push(d);});
 }
 
 /* ================= 一种小动物只有一个 ================= */
@@ -3443,7 +3450,7 @@ Object.assign(TH,{
 const CHALK='font-family="Comic Sans MS,Chalkboard SE,Segoe Print,sans-serif" font-weight="900" stroke="none"';
 const chalkT=(x,y,t,size,col='#F4F4EE')=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" fill="${col}" ${CHALK}>${t}</text>`;
 const emoT=(x,y,e,size)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" stroke="none">${e}</text>`;
-const PIC_EMO={'a:cat':'🐱','a:dog':'🐶','a:bunny':'🐰','a:bear':'🐻','a:panda':'🐼','a:pig':'🐷','a:fox':'🦊','a:frog':'🐸','t:duck':'🦆','t:cake':'🎂','t:ball':'⚽','t:balloon':'🎈','t:tree':'🌳'};
+const PIC_EMO={'a:sheep':'🐑','a:monkey':'🐵','a:tiger':'🐯','a:lion':'🦁','a:elephant':'🐘','a:cat':'🐱','a:dog':'🐶','a:bunny':'🐰','a:bear':'🐻','a:panda':'🐼','a:pig':'🐷','a:fox':'🦊','a:frog':'🐸','t:duck':'🦆','t:cake':'🎂','t:ball':'⚽','t:balloon':'🎈','t:tree':'🌳'};
 const chalkPic=w=>{const v=WPIC[w];return PIC_EMO[v]||v;};
 // 黑板内容：null = 平时的 ABC 123
 function drawChalk(L){
@@ -3527,7 +3534,7 @@ function startMatch(ph){
   const room=ph.room;state.match[room]={red:0,blue:0};drawScore();
   MATCH={room,ot:false,done:false};
   const ks=kids().filter(k=>!(drag&&drag.it===k));
-  const n=room==='soccer'?6:4,t=nowS();
+  const n=room==='soccer'?10:8,t=nowS();
   const players=[...ks].sort((a,b)=>((LIFE[b.t].likes.sport||0)-(LIFE[a.t].likes.sport||0))||Math.random()-.5).slice(0,n);
   // 球回到中圈
   const ball=items().find(i=>i.t===SPORTS[room].ball);
@@ -3620,6 +3627,54 @@ function dedupeBalls(){
   }
 }
 
+
+/* ================= 新来的小动物：小羊、小猴、小老虎、小狮子、小象 ================= */
+Object.assign(AN,{
+  sheep:{n:'小羊',v:600,box:[-80,-172,160,182],
+    pals:[{b:'#FFFFFF',l:'#F6F0E8',f:'#C9B8A8',fc:'#F7E1C8'},{b:'#F2E6D8',l:'#FFF8EE',f:'#B9A08A',fc:'#F7E1C8'},{b:'#E6E1EE',l:'#F8F6FB',f:'#A9A3B8',fc:'#F3E0CF'}],
+    back:p=>E(-58,-108,18,9,p.fc,'transform="rotate(-24 -58 -108)"')+E(58,-108,18,9,p.fc,'transform="rotate(24 58 -108)"')+C(32,-30,12,p.b),
+    face:p=>E(0,-94,38,34,p.fc,'stroke-width="3"')+blob([[-30,-140,17],[-11,-150,19],[11,-150,19],[30,-140,17]],p.b),
+    mouth:()=>E(0,-84,5,3.5,'#FF8FA8',NS)+mw(-80)},
+  monkey:{n:'小猴',v:700,box:[-76,-172,178,182],
+    pals:[{b:'#B07A50',l:'#F5D5B0',fc:'#F5D5B0'},{b:'#8E6A54',l:'#F2D2B4',fc:'#F2D2B4'},{b:'#D59B6A',l:'#FBE2C6',fc:'#FBE2C6'}],
+    back:p=>tube('M 28 -28 Q 70 -30 66 -70 Q 62 -96 86 -94 Q 98 -80 84 -74',p.b,9)
+      +C(-56,-102,17,p.b)+C(-56,-102,9,p.fc,NS)+C(56,-102,17,p.b)+C(56,-102,9,p.fc,NS),
+    face:p=>P('M 0 -72 Q -40 -70 -40 -100 Q -40 -128 -18 -126 Q -6 -126 0 -114 Q 6 -126 18 -126 Q 40 -128 40 -100 Q 40 -70 0 -72 Z',p.fc,'stroke-width="3"'),
+    mouth:()=>E(-4,-92,2.5,2,O,NS)+E(4,-92,2.5,2,O,NS)+L('M -12 -84 Q 0 -74 12 -84',3.5)},
+  tiger:{n:'小老虎',v:240,box:[-62,-172,152,182],
+    pals:[{b:'#FFA94D',l:'#FFF4E6',s:'#5B4A55'},{b:'#FFFFFF',l:'#FFFFFF',s:'#5B4A55'},{b:'#FFC46B',l:'#FFF7EA',s:'#8E5E3D'}],
+    back:p=>C(-40,-142,16,p.b)+C(-40,-142,8,p.l,NS)+C(40,-142,16,p.b)+C(40,-142,8,p.l,NS)
+      +tube('M 28 -26 Q 66 -22 66 -58 Q 66 -78 82 -84',p.b,10)+L('M 52 -30 L 58 -40 M 64 -50 L 74 -52',4,p.s),
+    face:p=>L('M -14 -140 L 14 -140 M -12 -130 L 12 -130 M -14 -120 L 14 -120 M 0 -140 L 0 -120',4,p.s)
+      +L('M -52 -104 L -38 -102 M -50 -92 L -38 -94 M 52 -104 L 38 -102 M 50 -92 L 38 -94',4,p.s)+E(0,-86,22,15,p.l,'stroke-width="3"'),
+    mouth:()=>P('M -5 -92 L 5 -92 L 0 -87 Z','#FF8FA8','stroke-width="2.5"')+mw(-84)},
+  lion:{n:'小狮子',v:180,box:[-88,-172,176,182],
+    pals:[{b:'#FFD166',l:'#FFF2CC',m:'#E8913A'},{b:'#F5E6C8',l:'#FFFBF0',m:'#C98B5A'},{b:'#FFC9A8',l:'#FFF0E6',m:'#FF8FA8'}],
+    back:p=>blob(Array.from({length:12},(_,i)=>{const a=i*Math.PI/6;return [r1(Math.cos(a)*62),r1(-104+Math.sin(a)*56),22];}),p.m)
+      +tube('M 28 -26 Q 66 -24 64 -60',p.b,8)+C(64,-66,10,p.m),
+    face:p=>C(-38,-138,11,p.b)+C(38,-138,11,p.b)+E(0,-86,22,15,p.l,'stroke-width="3"'),
+    mouth:()=>E(0,-92,6.5,5,O,NS)+mw(-85)},
+  elephant:{n:'小象',v:300,box:[-96,-172,192,182],
+    pals:[{b:'#BFC6D6',l:'#E3E7EF',i:'#FFC6D3'},{b:'#D7CFE8',l:'#EFEAF7',i:'#FFC6D3'},{b:'#B9D8E8',l:'#E4F2F9',i:'#FFC6D3'}],
+    back:p=>E(-62,-104,30,38,p.b)+E(-60,-104,18,26,p.i,NS)+E(62,-104,30,38,p.b)+E(60,-104,18,26,p.i,NS)+tube('M 30 -24 Q 50 -24 52 -40',p.b,5),
+    mouth:()=>'',
+    front:p=>tube('M 0 -94 Q -4 -64 6 -54 Q 16 -46 20 -58',p.b,15)+L('M -2 -80 L 6 -80 M -1 -70 L 7 -70',2.5,shade(p.b,-.25))},
+});
+Object.assign(LIFE,{
+  sheep:{speed:85,likes:{eat:3,sleep:3,walk:2,friend:2,sit:1,sport:1}},
+  monkey:{speed:140,hop:1,likes:{swing:4,slide:3,sport:3,dance:2,friend:1}},
+  tiger:{speed:120,likes:{sport:4,ball:3,walk:2,friend:1}},
+  lion:{speed:105,likes:{sleep:4,sport:2,sit:2,walk:1}},
+  elephant:{speed:70,likes:{bath:5,eat:3,sport:1,walk:1}},
+});
+Object.assign(ANIMAL_SND,{
+  sheep:()=>syn({type:'sawtooth',pts:[[0,420],[.1,460],[.5,380]],dur:.55,vol:.13,filter:['bandpass',1100,2],vib:[13,30]}),
+  monkey:()=>{for(const d of[0,.16,.32])syn({pts:[[0,600],[.07,950],[.12,700]],dur:.13,vol:.1,delay:d});},
+  tiger:()=>syn({type:'sawtooth',pts:[[0,170],[.15,210],[.45,140]],dur:.5,vol:.2,filter:['lowpass',700],vib:[18,10]}),
+  lion:()=>{syn({type:'sawtooth',pts:[[0,130],[.2,160],[.6,95]],dur:.65,vol:.24,filter:['lowpass',600],vib:[22,8]});noise(.5,{type:'lowpass',f0:500,f1:200,vol:.1});},
+  elephant:()=>syn({type:'square',pts:[[0,300],[.15,520],[.45,380]],dur:.5,vol:.12,filter:['bandpass',900,3],vib:[9,15]}),
+});
+
 /* ================= 开始 ================= */
 RAIL.addEventListener('change',()=>renderTray());
 if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -3642,6 +3697,7 @@ if((state.v||0)<6){
   const gt=items().find(i=>i.t==='table'&&segOf(i)===cs);if(gt)gt.x=cs*SEG+1540;
   state.v=6;save();
 }
+if((state.v||0)<9){dedupeKids();setupOwned();state.v=9;save();}
 if((state.v||0)<7){state.match.soccer={red:0,blue:0};state.match.basket={red:0,blue:0};state.v=7;save();}
 if((state.v||0)<8){
   const jd=new Set(items().filter(i=>i.t==='judges').map(i=>i.id));
