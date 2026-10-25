@@ -1266,6 +1266,7 @@ function tap(it){
     if(it.t==='monster'&&SC.hero){const h=getItem(SC.hero.hero);if(h)heroHit(SC.hero,h,it);else{anim(it.id,'wiggle');sfx.punch();}return;}
     if(it.t==='thief'&&SC.police&&SC.police.stage==='steal'){const h=getItem(SC.police.hero);if(h){h.x=it.x-(it.f?-1:1)*70;h.y=it.y;placeNode(h);}return;}
     anim(it.id,'wiggle');if(['trex','trike','brachio','ptero','monster'].includes(it.t))sfx.roar();return;}
+  if(it.k==='a'&&it.sick&&!story){treatTap(it);return;}
   if(it.role==='adult'){anim(it.id,'jump');ANIMAL_SND[it.t]();if(!story)say(['me_'+it.who]);return;}
   if(it.k==='a'&&it.hidden&&HS){tbOpen=false;placeToolbar();seekFound(it);return;}
   if(it.k==='a'&&canFly(it)&&!story&&!it.h){flyNow(it);ANIMAL_SND[it.t]();return;}
@@ -4336,6 +4337,18 @@ function medPatient(it){
     const d=Math.hypot(l.x-it.x,(l.y-it.y)*1.5)-(o.sick?60:0);if(d<bd){bd=d;best=o;}}
   return best;
 }
+// 直接点生病的小朋友：点三下就治好（说哪里疼 → 用工具 → 好啦）
+const TREAT={tummy:['🩺','💊'],tooth:['🔦','🪥'],leg:['🩺','🩹'],fever:['🌡️','💉'],cold:['🩺','🍵']};
+const TRN={};
+function treatTap(p){
+  const n=(TRN[p.id]=(TRN[p.id]||0)+1),tools=TREAT[p.sick]||['🩺','💊'],L=layout[p.id]||{x:p.x,y:p.y,S:1};
+  pauseBrain(p,6);sfx.pop();anim(p.id,'wiggle');tbOpen=false;placeToolbar();
+  fxText(L.x,L.y-210*L.S,'💖'.repeat(n)+'🤍'.repeat(Math.max(0,3-n)),'#FF6F9C');
+  if(n===1){emote(p,{tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'}[p.sick]||'🤒');say(['sick_'+p.sick]);}
+  else if(n===2){emote(p,tools[1]);say(['treat_'+p.sick]);sfx.sparkle();}
+  else{delete TRN[p.id];cureKid(p);anim(p.id,'jump');sfx.sparkle();celebrateAt(L);say(['pp_heal']);}
+}
+function celebrateAt(L){fx(L.x,L.y-120*L.S,'confetti',14);}
 function cureKid(p){
   if(!p.sick)return false;p.sick=null;const b=brain(p);b.scn=false;b.st='idle';b.until=nowS()+2;refresh(p);
   const L=layout[p.id];if(L)fx(L.x,L.y-150*L.S,'heart',8);emote(p,'💖');return true;
