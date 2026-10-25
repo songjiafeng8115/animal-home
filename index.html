@@ -3834,13 +3834,47 @@ function solved(s,h){
   if(h){h.score=(h.score??3)+1;h.today=(h.today||0)+1;const L=layout[h.id];if(L)fxText(L.x,L.y-200*L.S,'+1🌸','#FF6F9C');}
   addStars(1,$('#bShop'));sfx.cheer();
 }
+/* ================= 换装时所有场景一起变：超人/警察/医生/消防员的氛围 ================= */
+(function(){const st=document.createElement('style');st.textContent=`
+.ambBlink{animation:ambBlink 1s steps(1) infinite}.ambBlink2{animation:ambBlink 1s steps(1) infinite;animation-delay:-.5s}
+@keyframes ambBlink{50%{opacity:.15}}
+.ambFlash{animation:ambFlash 5s linear infinite;opacity:0}
+@keyframes ambFlash{0%,86%,100%{opacity:0}88%{opacity:1}90%{opacity:.1}92%{opacity:.9}95%{opacity:0}}
+.ambFloat{animation:ambFloat 2.6s ease-in-out infinite alternate}
+@keyframes ambFloat{to{transform:translate(24px,-34px)}}
+.ambDrift{animation:ambDrift 6s linear infinite;opacity:0}
+@keyframes ambDrift{0%{transform:translate(0,0);opacity:0}15%{opacity:.85}100%{transform:translate(-90px,-260px);opacity:0}}`;document.head.appendChild(st);})();
+const AMB={
+  // 超人：天变暗、打闪电、小怪兽在天上飞
+  hero:()=>R(0,0,1600,FL,0,'#3B2A5C',NS+' opacity=".38"')
+    +[[260,0],[1180,2.4]].map(([x,d])=>`<g class="ambFlash" style="animation-delay:${d}s">${P(`M ${x} 20 L ${x-40} 130 L ${x} 130 L ${x-30} 240 L ${x+50} 100 L ${x+10} 100 L ${x+40} 20 Z`,'#FFE45C','stroke="#F2B600" stroke-width="4"')}</g>`).join('')
+    +[[520,150,0],[900,90,.9],[1420,190,1.7]].map(([x,y,d])=>`<g class="ambFloat" style="animation-delay:-${d}s">${E(x,y,34,28,'#9B6BD6','stroke-width="4"')+P(`M ${x-30} ${y-14} L ${x-44} ${y-40} L ${x-14} ${y-26} Z M ${x+30} ${y-14} L ${x+44} ${y-40} L ${x+14} ${y-26} Z`,'#9B6BD6','stroke-width="3"')+C(x-11,y-4,7,'#fff',NS)+C(x+11,y-4,7,'#fff',NS)+C(x-10,y-3,3.5,O,NS)+C(x+12,y-3,3.5,O,NS)+L(`M ${x-10} ${y+12} L ${x-4} ${y+8} L ${x+2} ${y+12} L ${x+8} ${y+8}`,3)}</g>`).join(''),
+  // 警察：红蓝警灯一闪一闪、墙上贴着通缉令
+  police:()=>`<g class="ambBlink">${C(0,FL/2,330,'#FF4D5E',NS+' opacity=".28"')}</g><g class="ambBlink2">${C(1600,FL/2,330,'#4C8DFF',NS+' opacity=".28"')}</g>`
+    +`<g transform="rotate(-4 330 170)">${R(250,100,160,190,8,'#FFF6DC','stroke-width="4"')}<text x="330" y="140" text-anchor="middle" font-size="30" font-weight="900" fill="#D64545" stroke="none">通缉</text>`
+    +C(330,205,38,'#E9C9A8','stroke-width="4"')+R(288,190,84,20,10,'#3B3B4F',NS)+C(316,200,5,'#fff',NS)+C(344,200,5,'#fff',NS)+L('M 316 226 Q 330 232 344 226',3)+R(292,252,76,24,6,'#FFD166','stroke-width="3"')+`<text x="330" y="270" text-anchor="middle" font-size="16" font-weight="900" fill="#5B4A55" stroke="none">⭐⭐⭐</text></g>`,
+  // 医生：每个场景挂上红十字，小病菌飘来飘去
+  doctor:()=>R(0,0,1600,FL,0,'#BFF0DF',NS+' opacity=".22"')
+    +C(1320,150,46,'#fff','stroke-width="4"')+R(1306,118,28,64,4,'#FF5A6E',NS)+R(1288,136,64,28,4,'#FF5A6E',NS)
+    +[[300,170,0,'#8FD694'],[700,110,.8,'#B5E37A'],[1050,200,1.6,'#7FD3C6']].map(([x,y,d,c])=>`<g class="ambFloat" style="animation-delay:-${d}s">${[0,1,2,3,4,5,6,7].map(i=>{const a=i*Math.PI/4;return C(r1(x+Math.cos(a)*30),r1(y+Math.sin(a)*30),7,c,'stroke-width="3"');}).join('')+C(x,y,26,c,'stroke-width="4"')+C(x-9,y-4,4,O,NS)+C(x+9,y-4,4,O,NS)+L(`M ${x-8} ${y+10} Q ${x} ${y+4} ${x+8} ${y+10}`,3)}</g>`).join(''),
+  // 消防员：天空发橙、远处冒烟、火星飘起来
+  fireman:()=>R(0,0,1600,FL,0,'#FF8A3D',NS+' opacity=".26"')
+    +[[300,0],[800,2],[1300,4]].map(([x,d])=>[0,1.3,2.6].map(e=>`<g class="ambDrift" style="animation-delay:-${d+e}s">${C(x,FL-40,40,'#8C8494',NS+' opacity=".7"')+C(x+30,FL-70,30,'#A39BAA',NS+' opacity=".6"')}</g>`).join('')).join('')
+    +[[200,.5],[550,1.7],[950,3.1],[1250,.9],[1500,4.2]].map(([x,d])=>`<g class="ambDrift" style="animation-delay:-${d}s">${C(x,FL,6,'#FF7A3D',NS)+C(x+14,FL+20,4,'#FFD166',NS)}</g>`).join(''),
+};
+function ambient(type,on){
+  let g=$('#amb_'+type);
+  if(!on){if(g)g.remove();return;}
+  if(!g){g=document.createElementNS(SVGNS,'g');g.id='amb_'+type;$('#jungleL').after(g);}
+  g.innerHTML=`<defs><g id="ambTpl_${type}">${AMB[type]()}</g></defs>`+ROOMS.map((r,i)=>`<g transform="translate(${i*SEG} 0)"><g clip-path="url(#segClip)"><use href="#ambTpl_${type}"/></g></g>`).join('');
+}
 function startScenario(type,h,t){
   const s={type,hero:h.id,t0:t};SC[type]=s;
-  SCN[type].start(s,h,t);
+  SCN[type].start(s,h,t);if(AMB[type])ambient(type,true);
 }
 function stopScenario(type,ok){
   const s=SC[type];if(!s)return;delete SC[type];
-  SCN[type].stop(s,ok);SC_COOL[type]=nowS()+(ok?30:4);
+  SCN[type].stop(s,ok);ambient(type,false);SC_COOL[type]=nowS()+(ok?30:4);
   for(const it of items())if(it.temp&&it.scn===type)removeItem(it,false);
   render();save();
 }
