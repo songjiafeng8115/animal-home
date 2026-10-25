@@ -312,8 +312,8 @@ button{font-family:inherit;color:var(--ink)}
   border-radius:22px;display:flex;align-items:center;gap:2px;padding:0 6px;cursor:pointer;box-shadow:0 3px 0 var(--ink);font-family:inherit;color:var(--ink)}
 .nav b{font-size:24px;line-height:1}.nav i{font-style:normal;font-size:16px}.nav:hover{opacity:1}
 #navL{left:6px}#navR{right:6px}
-.flag{animation:flagw 1.4s ease-in-out infinite alternate;transform-origin:1400px 100px}
-@keyframes flagw{to{transform:skewY(5deg) scaleX(.94)}}
+.flag{animation:flagw 1.4s ease-in-out infinite alternate;transform-origin:1400px 124px}
+@keyframes flagw{to{transform:skewY(3deg) scaleX(.96)}}
 #more{flex-wrap:wrap;width:max-content;max-width:200px}
 /* ---------- 飞翔、观众、迷宫、捉迷藏 ---------- */
 [data-id].flying .shd{display:none}
@@ -517,6 +517,9 @@ const tube=(d,c,w)=>L(d,w+8)+L(d,w,c);
 const blob=(cs,f)=>cs.map(([x,y,r])=>C(x,y,r,O,'stroke-width="8"')).join('')+cs.map(([x,y,r])=>C(x,y,r,f,NS)).join('');
 const heartD=(cx,cy,r)=>`M ${cx} ${cy+r*.9} C ${cx-r*1.7} ${cy-r*.1} ${cx-r*.9} ${cy-r*1.4} ${cx} ${cy-r*.45} C ${cx+r*.9} ${cy-r*1.4} ${cx+r*1.7} ${cy-r*.1} ${cx} ${cy+r*.9} Z`;
 function starD(cx,cy,r){let d='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.47:r;d+=(i?'L':'M')+r1(cx+Math.cos(a)*rr)+' '+r1(cy+Math.sin(a)*rr)+' ';}return d+'Z';}
+function cnFlagStars(x0,y0,u){let s=P(starD(x0+5*u,y0+5*u,3*u),'#FFDE00',NS);
+  for(const [gx,gy] of [[10,2],[12,4],[12,7],[10,9]]){const cx=x0+gx*u,cy=y0+gy*u,a=Math.atan2(5-gy,5-gx)*180/Math.PI+90;
+    s+=`<g transform="rotate(${r1(a)} ${cx} ${cy})">${P(starD(cx,cy,u),'#FFDE00',NS)}</g>`;}return s;}
 function flower(x,y,r,c){let s='';for(let i=0;i<5;i++){const a=i*Math.PI*2/5-Math.PI/2;s+=C(r1(x+Math.cos(a)*r*.8),r1(y+Math.sin(a)*r*.8),r*.62,c,'stroke-width="2.5"');}return s+C(x,y,r*.5,'#FFE07A','stroke-width="2.5"');}
 const cloudNS=(x,y,k,f='#fff')=>C(x-30*k,y,22*k,f,NS)+C(x,y-14*k,30*k,f,NS)+C(x+32*k,y,22*k,f,NS)+R(x-52*k,y-4*k,104*k,26*k,13*k,f,NS);
 
@@ -953,7 +956,7 @@ function schoolBuilding(){
     +R(690,188,220,44,10,'#FF8FB1')+`<text x="800" y="220" text-anchor="middle" font-size="28" font-weight="900" fill="#fff" stroke="none">动物小学</text>`
     +P(`M 730 ${FL+10} L 730 ${FL-110} Q 800 ${FL-170} 870 ${FL-110} L 870 ${FL+10} Z`,'#C9915E')+L(`M 800 ${FL-140} L 800 ${FL+10}`,3)+C(784,FL-50,4,'#FFD166')+C(816,FL-50,4,'#FFD166')
     +R(1390,60,10,FL-40,4,'#D9D2DA')+C(1395,58,9,'#FFD166')
-    +`<g class="flag">${P('M 1400 70 Q 1450 54 1490 74 Q 1530 94 1570 76 L 1570 136 Q 1530 154 1490 134 Q 1450 114 1400 130 Z','#FF6F91')+P(starD(1470,104,14),'#FFD166',NS)}</g>`;
+    +`<g class="flag">${P('M 1400 64 Q 1445 54 1490 64 Q 1535 74 1580 64 L 1580 184 Q 1535 194 1490 184 Q 1445 174 1400 184 Z','#EE1C25')+cnFlagStars(1400,64,6)}</g>`;
   return s;
 }
 // 教室：黑板、窗户、字母旗
