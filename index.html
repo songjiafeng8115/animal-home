@@ -1266,7 +1266,7 @@ function tap(it){
     if(it.t==='monster'&&SC.hero){const h=getItem(SC.hero.hero);if(h)heroHit(SC.hero,h,it);else{anim(it.id,'wiggle');sfx.punch();}return;}
     if(it.t==='thief'&&SC.police&&SC.police.stage==='steal'){const h=getItem(SC.police.hero);if(h){h.x=it.x-(it.f?-1:1)*70;h.y=it.y;placeNode(h);}return;}
     anim(it.id,'wiggle');if(['trex','trike','brachio','ptero','monster'].includes(it.t))sfx.roar();return;}
-  if(it.k==='a'&&it.sick&&!story){treatTap(it);return;}
+  if(it.k==='a'&&it.sick&&!story){openTreat(it);return;}
   if(it.role==='adult'){anim(it.id,'jump');ANIMAL_SND[it.t]();if(!story)say(['me_'+it.who]);return;}
   if(it.k==='a'&&it.hidden&&HS){tbOpen=false;placeToolbar();seekFound(it);return;}
   if(it.k==='a'&&canFly(it)&&!story&&!it.h){flyNow(it);ANIMAL_SND[it.t]();return;}
@@ -4467,6 +4467,98 @@ function clinicStep(dt,t){
     else if(t>CLINIC.dt){CLINIC.dt=null;cureKid(pt);}
   }else{for(const o of items())if(o.k==='a'&&o.acc&&o.acc.body==='doctor'&&BR[o.id]&&BR[o.id].scn&&!SC.doctor&&!(CLINIC.q.includes(o.id)))BR[o.id].scn=false;}
 }
+
+
+/* ================= 看病：点生病的小朋友 → 先检查 → 再选药 / 治疗器械 ================= */
+const EXAMS=[
+  {id:'steth',ic:'🩺',n:'听诊器',finds:['tummy','cold']},
+  {id:'thermo',ic:'🌡️',n:'体温计',finds:['fever']},
+  {id:'light',ic:'🔦',n:'手电筒',finds:['tooth','cold']},
+  {id:'xray',ic:'🩻',n:'拍X光',finds:['leg']},
+];
+const CURES=[
+  {id:'pill',ic:'💊',n:'药片',for:['tummy']},
+  {id:'syrup',ic:'🧴',n:'糖浆',for:['tummy','cold','fever']},
+  {id:'shot',ic:'💉',n:'打针',for:['fever']},
+  {id:'bandage',ic:'🩹',n:'绷带',for:['leg']},
+  {id:'ice',ic:'🧊',n:'冰袋',for:['fever','leg']},
+  {id:'brush',ic:'🪥',n:'牙刷',for:['tooth']},
+  {id:'water',ic:'🍵',n:'热水',for:['cold']},
+  {id:'mask',ic:'😷',n:'口罩',for:['cold']},
+];
+// 检查出来的样子
+const DIAG={tummy:{ic:'🤢',txt:'咕噜咕噜'},tooth:{ic:'🦷',txt:'小蛀牙'},leg:{ic:'🦴',txt:'腿受伤'},fever:{ic:'🌡️',txt:'38.5°'},cold:{ic:'🤧',txt:'喉咙红红'}};
+(function(){
+  const st=document.createElement('style');st.textContent=`
+#treat .ov-box{width:min(760px,96vw)}
+.tr-top{display:flex;align-items:center;gap:14px;margin:-4px 0 10px}
+.tr-pat{position:relative;width:96px;height:96px;flex:none;background:#fff;border:3px solid var(--ink);border-radius:22px;display:grid;place-items:center}
+.tr-pat svg{width:84px;height:84px}
+.tr-pat i{position:absolute;right:-12px;top:-12px;font-style:normal;font-size:34px;background:#fff;border:3px solid var(--ink);border-radius:50%;width:50px;height:50px;display:grid;place-items:center}
+.tr-steps{display:flex;gap:8px;align-items:center;font-size:30px}
+.tr-steps span{padding:4px 14px;border-radius:999px;border:3px solid #E3D6DC;background:#fff;opacity:.5}
+.tr-steps span.on{border-color:var(--ink);background:#FFE07A;opacity:1}
+.tr-steps span.ok{border-color:#8FD694;background:#E8F8E4;opacity:1}
+.tr-res{margin-left:auto;font-size:30px;font-weight:900;color:#FF5A6E;min-height:40px}
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tr-grid button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 3px 0 var(--ink);padding:8px 4px;font-family:inherit;color:var(--ink);cursor:pointer}
+.tr-grid button i{font-style:normal;font-size:46px;line-height:1.1}.tr-grid button b{font-size:16px}
+.tr-grid button.glow{animation:trGlow .7s ease-in-out infinite alternate;background:#FFF6C8}
+.tr-grid button.no{animation:trNo .45s;opacity:.45}
+.tr-grid button.yes{background:#E8F8E4;border-color:#5FB07A;transform:scale(1.08)}
+@keyframes trGlow{to{box-shadow:0 0 0 6px #FFD166,0 3px 0 var(--ink);transform:scale(1.06)}}
+@keyframes trNo{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.tr-big{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;font-size:110px;animation:trPop 1.3s ease-out forwards}
+@keyframes trPop{0%{transform:scale(.3);opacity:0}25%{transform:scale(1.15);opacity:1}70%{opacity:1}100%{transform:scale(1);opacity:0}}
+@media (max-height:520px){.tr-pat{width:74px;height:74px}.tr-pat svg{width:64px;height:64px}.tr-grid button i{font-size:36px}.tr-grid{grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:7px}}`;
+  document.head.appendChild(st);
+  const d=document.createElement('div');d.id='treat';d.className='overlay';d.hidden=true;
+  d.innerHTML=`<div class="ov-box"><div class="ov-head"><span>🏥</span><button class="ov-x" id="treatClose">✖</button></div><div id="treatBody"></div></div>`;
+  document.body.appendChild(d);
+})();
+let TR=null;
+function openTreat(p){
+  TR={id:p.id,step:'exam',miss:0};stopVO();tbOpen=false;placeToolbar();pauseBrain(p,30);
+  emote(p,{tummy:'🤢',tooth:'🦷',leg:'🦵',fever:'🤒',cold:'🤧'}[p.sick]||'🤒');
+  drawTreat();$('#treat').hidden=false;sfx.page();say(['sick_'+p.sick,'exam_pick']);
+}
+function drawTreat(res){
+  const p=getItem(TR.id);if(!p)return closeTreat();
+  const list=TR.step==='exam'?EXAMS:CURES,dx=TR.step==='cure'?DIAG[p.sick]:null;
+  $('#treatBody').innerHTML=`<div class="tr-top"><div class="tr-pat">${thumb('animal',p.t)}<i>${dx?dx.ic:'❓'}</i></div>`
+    +`<div class="tr-steps"><span class="${TR.step==='exam'?'on':'ok'}">🔍</span>➜<span class="${TR.step==='cure'?'on':''}">💊</span></div>`
+    +`<div class="tr-res">${res||(dx?dx.txt:'')}</div></div>`
+    +`<div class="tr-grid">${list.map(x=>`<button data-tr="${x.id}"><i>${x.ic}</i><b>${x.n}</b></button>`).join('')}</div>`;
+}
+function closeTreat(){TR=null;$('#treat').hidden=true;}
+function bigFx(ic){const b=document.createElement('div');b.className='tr-big';b.textContent=ic;$('#treat .ov-box').appendChild(b);setTimeout(()=>b.remove(),1300);}
+function treatPick(id,btn){
+  const p=getItem(TR&&TR.id);if(!p||!p.sick){closeTreat();return;}
+  if(TR.busy)return;
+  const L=()=>layout[p.id]||{x:p.x,y:p.y,S:1};
+  if(TR.step==='exam'){
+    const ex=EXAMS.find(e=>e.id===id);bigFx(ex.ic);emote(p,ex.ic);anim(p.id,'wiggle');sfx.pick();
+    if(ex.finds.includes(p.sick)){
+      TR.busy=true;btn.classList.add('yes');
+      setTimeout(()=>{if(!TR)return;TR.busy=false;TR.step='cure';TR.miss=0;drawTreat();say(['diag_'+p.sick,'treat_pick']);sfx.sparkle();},1300);
+    }else{
+      btn.classList.add('no');btn.disabled=true;say(['exam_none']);
+      if(++TR.miss>=1)setTimeout(()=>{const g=EXAMS.find(e=>e.finds.includes(p.sick));const b=document.querySelector(`[data-tr="${g.id}"]`);if(b)b.classList.add('glow');},900);
+    }
+    return;
+  }
+  const cu=CURES.find(c=>c.id===id);bigFx(cu.ic);emote(p,cu.ic);
+  if(cu.for.includes(p.sick)){
+    TR.busy=true;btn.classList.add('yes');sfx.sparkle();say(['treat_'+p.sick]);
+    setTimeout(()=>{closeTreat();const l=L();cureKid(p);anim(p.id,'jump');fx(l.x,l.y-120*l.S,'confetti',16);
+      setTimeout(()=>say(['pp_heal']),300);},1500);
+  }else{
+    btn.classList.add('no');btn.disabled=true;sfx.pop();say(['treat_wrong']);
+    if(++TR.miss>=2){const g=CURES.find(c=>c.for.includes(p.sick)&&!document.querySelector(`[data-tr="${c.id}"]`).disabled);const b=g&&document.querySelector(`[data-tr="${g.id}"]`);if(b)b.classList.add('glow');}
+  }
+}
+$('#treatBody').addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(b&&!b.disabled)treatPick(b.dataset.tr,b);});
+$('#treatClose').onclick=()=>{closeTreat();stopVO();};
 
 /* ================= 开始 ================= */
 RAIL.addEventListener('change',()=>renderTray());
