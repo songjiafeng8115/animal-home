@@ -1448,6 +1448,14 @@ $('#bFull').onclick=()=>{
   if(r&&r.then)r.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}).catch(()=>{});
 };
 $('#rotate').onclick=()=>$('#rotate').classList.remove('ask');
+// 手机上第一次点屏幕就自动全屏 + 横屏（从桌面图标打开的本来就是全屏，不用再请求）
+{const standalone=matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+ if(fsOK&&!standalone&&matchMedia('(pointer:coarse)').matches){
+  const go=()=>{document.removeEventListener('pointerup',go,true);
+    if(document.fullscreenElement||document.webkitFullscreenElement)return;
+    const el=document.documentElement;try{const r=(el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+      if(r&&r.then)r.then(()=>{try{screen.orientation.lock('landscape').catch(()=>{});}catch(e){}}).catch(()=>{});}catch(e){}};
+  document.addEventListener('pointerup',go,true);}}
 function hideHint(){if(!state.hinted){state.hinted=true;save();}$('#hint').style.display='none';}
 if(state.hinted)$('#hint').style.display='none';
 
@@ -4223,7 +4231,7 @@ if((state.v||0)<6){
   const cs=roomIdx('classroom');
   if(!items().some(i=>i.t==='podium'))items().push(T('podium',cs*SEG+800,665));
   const pos=[[260,725],[500,725],[1100,725],[1340,725],[380,850],[620,850],[860,850],[1100,850],[1340,850]];
-  KIDS.forEach((sp,i)=>{const d=items().find(x=>x.t==='desk'&&x.owner===sp);if(d){d.x=cs*SEG+pos[i][0];d.y=pos[i][1];}});
+  KIDS.forEach((sp,i)=>{const d=items().find(x=>x.t==='desk'&&x.owner===sp);if(d&&pos[i]){d.x=cs*SEG+pos[i][0];d.y=pos[i][1];}});
   const gt=items().find(i=>i.t==='table'&&segOf(i)===cs);if(gt)gt.x=cs*SEG+1540;
   state.v=6;save();
 }
