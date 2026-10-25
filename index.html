@@ -348,14 +348,22 @@ button{font-family:inherit;color:var(--ink)}
   padding:3px 12px 3px 6px;box-shadow:0 3px 0 var(--ink);font-family:inherit;color:var(--ink);cursor:pointer}
 #clockHud .ic{font-size:24px}#clockHud b{font-size:18px;font-variant-numeric:tabular-nums}#clockHud .lb{font-size:14px;font-weight:800}
 #clockHud.bump{animation:bump .6s ease-out}
-.storyOn #clockHud{display:none}
+.storyOn #clockHud,.storyOn #actHud{display:none}
+#actHud{position:absolute;left:8px;top:58px;z-index:6;width:48px;height:48px;border-radius:50%;background:#FFE07A;border:3px solid var(--ink);box-shadow:0 3px 0 var(--ink);font-size:24px;cursor:pointer;padding:0}
+#actHud.on{background:#FF8FB1;animation:navh .7s ease-in-out infinite alternate}
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.acts button{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 3px 0 var(--ink);padding:8px 4px;font-family:inherit;color:var(--ink);cursor:pointer}
+.acts button i{font-style:normal;font-size:44px;line-height:1.1}.acts button b{font-size:16px}
+.acts button.cur{background:#FFF1F5;border-color:#FF8FB1}
+.acts .stop{grid-column:1/-1;flex-direction:row;justify-content:center;gap:12px;background:#FF6F91;color:#fff}
+.acts .stop i{font-size:40px}.acts .stop b{font-size:22px}
 .sched{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .sched span{display:flex;flex-direction:column;align-items:center;background:#fff;border:2px solid #E3D6DC;border-radius:14px;padding:4px 8px;font-size:22px}
 .sched span b{font-size:12px}.sched span.on{border-color:#FF8FB1;background:#FFF1F5;border-width:3px}
 .kids{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .kid{position:relative;background:#fff;border:3px solid var(--ink);border-radius:16px;display:flex;flex-direction:column;align-items:center;padding:4px;font-size:18px}
 .kid svg{width:62px;height:62px}.kid b{font-size:18px}
-@media (max-height:560px) and (min-aspect-ratio:3/2){#clockHud{top:4px;left:4px;padding:2px 8px 2px 4px}#clockHud .ic{font-size:18px}#clockHud b{font-size:14px}#clockHud .lb{display:none}}
+@media (max-height:560px) and (min-aspect-ratio:3/2){#actHud{top:40px;left:4px;width:38px;height:38px;font-size:19px}#clockHud{top:4px;left:4px;padding:2px 8px 2px 4px}#clockHud .ic{font-size:18px}#clockHud b{font-size:14px}#clockHud .lb{display:none}}
 .flytext{position:fixed;transform:translate(-50%,0);font-size:30px;font-weight:900;z-index:60;pointer-events:none;-webkit-text-stroke:5px #fff;paint-order:stroke;animation:flyt 1.3s ease-out forwards}
 @keyframes flyt{to{transform:translate(-50%,60px);opacity:0}}
 #clockHud .warn{font-size:13px;letter-spacing:-2px}
@@ -456,6 +464,7 @@ button{font-family:inherit;color:var(--ink)}
     <div id="seekHud" hidden></div>
     <div id="snow" hidden><i style="left:0%;animation-duration:6s;animation-delay:-0.0s;font-size:14px">❄</i><i style="left:37%;animation-duration:8s;animation-delay:-1.3s;font-size:19px">❄</i><i style="left:74%;animation-duration:10s;animation-delay:-2.6s;font-size:24px">❄</i><i style="left:11%;animation-duration:7s;animation-delay:-3.9s;font-size:29px">❄</i><i style="left:48%;animation-duration:9s;animation-delay:-5.2s;font-size:18px">❄</i><i style="left:85%;animation-duration:6s;animation-delay:-6.5s;font-size:23px">❄</i><i style="left:22%;animation-duration:8s;animation-delay:-7.8s;font-size:28px">❄</i><i style="left:59%;animation-duration:10s;animation-delay:-1.1s;font-size:17px">❄</i><i style="left:96%;animation-duration:7s;animation-delay:-2.4s;font-size:22px">❄</i><i style="left:33%;animation-duration:9s;animation-delay:-3.7s;font-size:27px">❄</i><i style="left:70%;animation-duration:6s;animation-delay:-5.0s;font-size:16px">❄</i><i style="left:7%;animation-duration:8s;animation-delay:-6.3s;font-size:21px">❄</i><i style="left:44%;animation-duration:10s;animation-delay:-7.6s;font-size:26px">❄</i><i style="left:81%;animation-duration:7s;animation-delay:-0.9s;font-size:15px">❄</i><i style="left:18%;animation-duration:9s;animation-delay:-2.2s;font-size:20px">❄</i><i style="left:55%;animation-duration:6s;animation-delay:-3.5s;font-size:25px">❄</i><i style="left:92%;animation-duration:8s;animation-delay:-4.8s;font-size:14px">❄</i><i style="left:29%;animation-duration:10s;animation-delay:-6.1s;font-size:19px">❄</i><i style="left:66%;animation-duration:7s;animation-delay:-7.4s;font-size:24px">❄</i><i style="left:3%;animation-duration:9s;animation-delay:-0.7s;font-size:29px">❄</i><i style="left:40%;animation-duration:6s;animation-delay:-2.0s;font-size:18px">❄</i><i style="left:77%;animation-duration:8s;animation-delay:-3.3s;font-size:23px">❄</i><i style="left:14%;animation-duration:10s;animation-delay:-4.6s;font-size:28px">❄</i><i style="left:51%;animation-duration:7s;animation-delay:-5.9s;font-size:17px">❄</i><i style="left:88%;animation-duration:9s;animation-delay:-7.2s;font-size:22px">❄</i><i style="left:25%;animation-duration:6s;animation-delay:-0.5s;font-size:27px">❄</i><i style="left:62%;animation-duration:8s;animation-delay:-1.8s;font-size:16px">❄</i><i style="left:99%;animation-duration:10s;animation-delay:-3.1s;font-size:21px">❄</i><i style="left:36%;animation-duration:7s;animation-delay:-4.4s;font-size:26px">❄</i><i style="left:73%;animation-duration:9s;animation-delay:-5.7s;font-size:15px">❄</i><i style="left:10%;animation-duration:6s;animation-delay:-7.0s;font-size:20px">❄</i><i style="left:47%;animation-duration:8s;animation-delay:-0.3s;font-size:25px">❄</i><i style="left:84%;animation-duration:10s;animation-delay:-1.6s;font-size:14px">❄</i><i style="left:21%;animation-duration:7s;animation-delay:-2.9s;font-size:19px">❄</i><i style="left:58%;animation-duration:9s;animation-delay:-4.2s;font-size:24px">❄</i><i style="left:95%;animation-duration:6s;animation-delay:-5.5s;font-size:29px">❄</i></div>
     <button id="clockHud" title="作息时间 / 光荣榜"></button>
+    <button id="actHud" title="我来安排">📣</button>
     <button id="navL" class="nav" title="去左边的房间" hidden><b>‹</b><i></i></button>
     <button id="navR" class="nav" title="去右边的房间" hidden><i></i><b>›</b></button>
     <div id="hint">👉 把旁边的东西拖进房间吧</div>
@@ -3066,7 +3075,9 @@ const PHASES=[
   {id:'sleep',start:1200,end:1860,who:'dad',act:'sleep',ic:'😴',n:'睡觉',line:'sched_sleep',rate:3},
 ];
 if(state.clock==null)state.clock=760;
-const phaseAt=c=>{const m=c<420?c+1440:c;const p=PHASES.find(p=>m>=p.start&&m<p.end)||PHASES[4];return (p.id==='free'&&matchAt(c))||p;};
+const ovrPh=()=>{const o=state.ovr;if(!o)return null;return PHASES.find(p=>p.id===o.id)||Object.values(MATCHPH).find(p=>p.id===o.id)||null;};
+const phaseAt=c=>ovrPh()||clockPh(c);
+const clockPh=c=>{const m=c<420?c+1440:c;const p=PHASES.find(p=>m>=p.start&&m<p.end)||PHASES[4];return (p.id==='free'&&matchAt(c))||p;};
 let curPh=null,schedT=0,peBeat=0,peN=0,clockSaveT=0;
 const NAUGHTY=[],AM={};
 const kids=()=>items().filter(i=>i.k==='a'&&!i.role&&!i.hidden);
@@ -3147,7 +3158,8 @@ function startPhase(ph,quiet){
   }
   render();updateClock(true);
   if(!quiet&&!story){sfx.bell();if(ph.line)setTimeout(()=>say([ph.line]),900);}
-  if(!quiet&&ph.act==='sleep')setTimeout(daySummary,5200);
+  if(!quiet&&ph.act==='sleep'&&!state.ovr)setTimeout(daySummary,5200);
+  updateActHud();
   save();
 }
 function schedStep(dt,t){
@@ -3155,6 +3167,7 @@ function schedStep(dt,t){
   const ph=phaseAt(state.clock),hold=matchClockHold(ph,t);
   if(!hold&&ph!==curPh){startPhase(ph,curPh===null);return;}
   if(!hold)state.clock=(state.clock+dt*ph.rate)%1440;
+  if(!hold&&state.ovr){state.ovr.left-=dt*ph.rate;if(state.ovr.left<=0){state.ovr=null;updateActHud();}}
   if(t>clockSaveT){clockSaveT=t+10;updateClock();save();}
   adultStep(dt,t);
   for(const n of NAUGHTY){const k=getItem(n.id),b=k&&BR[k.id];if(!b||!b.naughty)continue;
@@ -3295,9 +3308,58 @@ function openBoard(){
     +`<div class="me"><span class="who">👧</span><b>⭐${state.coins||0}</b><span>${P.good?'😊👍':'🟡'.repeat(Math.min(3,P.strikes||1))}</span></div>`
     +`<div class="kids">${list.map((k,i)=>`<div class="kid">${k.star?'<i class="crown">👑</i>':''}<span class="rk">${i+1}</span>${thumb('animal',k.t)}`
       +`<div class="fl">${'🌸'.repeat(Math.min(k.today||0,5))||'&nbsp;'}</div><b>🌸${k.score??3}</b><span class="md">${medalOf(k.score??3)}</span>${k.cups?`<span class="cup">🏆${k.cups}</span>`:''}</div>`).join('')}</div>`;
-  $('#board').hidden=false;sfx.page();say(['ui_board']);
+  $('#board .ov-head span').textContent='🏆';$('#board').hidden=false;sfx.page();say(['ui_board']);
 }
 $('#clockHud').onclick=openBoard;
+// 宝宝自己安排：点图就开始，点“结束”就停下来去自由玩
+const ACTS=[
+  {id:'class',ic:'📚',n:'上课',min:60},
+  {id:'pe',ic:'🤸',n:'做操',min:60,line:'act_pe'},
+  {id:'match_soccer',ic:'⚽',n:'踢足球',min:90},
+  {id:'match_basket',ic:'🏀',n:'打篮球',min:90},
+  {id:'lunch',ic:'🍚',n:'吃饭',min:40},
+  {id:'sleep',ic:'😴',n:'睡觉',min:150},
+];
+function updateActHud(){const b=$('#actHud');if(!b)return;const on=!!(curPh&&curPh.act!=='free');b.classList.toggle('on',!!state.ovr&&on);b.textContent=state.ovr&&on?curPh.ic:'📣';}
+function openActs(){
+  stopVO();
+  const busy=curPh&&curPh.act!=='free';
+  $('#boardBody').innerHTML=`<div class="acts">${busy?`<button class="stop" data-act="stop"><i>✋</i><b>结束${curPh.ic}</b></button>`:''}`
+    +ACTS.map(a=>`<button data-act="${a.id}" class="${curPh&&curPh.id===a.id?'cur':''}"><i>${a.ic}</i><b>${a.n}</b></button>`).join('')+`</div>`;
+  $('#board .ov-head span').textContent='📣';$('#board').hidden=false;sfx.page();say(['ui_acts']);
+}
+// 比赛提前结束也要分出胜负：平局就点球
+function endMatchNow(){
+  if(!MATCH||MATCH.done)return;const m=state.match[MATCH.room];
+  if(m.red===m.blue){(Math.random()<.5?m.red++:m.blue++);drawScore();if(segVisible(MATCH.room))say(['match_pens']);}
+  finishMatch(MATCH.room);
+}
+function remainOf(p,c){const m=c<420?c+1440:c;return Math.max(5,p.end-m);}
+function kidStart(id){
+  const a=ACTS.find(x=>x.id===id);if(!a)return;
+  if(curPh&&curPh.act==='match')endMatchNow();
+  state.ovr={id,left:a.min};
+  const ph=ovrPh();startPhase(ph,true);sfx.bell();
+  setTimeout(()=>say([a.line||ph.line]),600);
+  if(ph.room)goRoom(ph.room);
+  save();
+}
+function kidStop(){
+  if(!curPh||curPh.act==='free')return;
+  if(curPh.act==='match')endMatchNow();
+  const cp=clockPh(state.clock);
+  // 本来就是作息表里的活动 → 一直自由玩到下一个时段；宝宝自己开的 → 回到作息表（作息表正好也是这个活动，就自由玩）
+  if(state.ovr&&cp!==curPh&&cp.act==='free')state.ovr=null;
+  else state.ovr={id:'free',left:cp.act==='free'?60:remainOf(cp,state.clock)};
+  startPhase(ovrPh()||cp,true);sfx.whistle();setTimeout(()=>say(['act_end']),400);
+  save();
+}
+$('#actHud').onclick=openActs;
+$('#boardBody').addEventListener('click',e=>{
+  const b=e.target.closest('.acts button');if(!b)return;
+  $('#board').hidden=true;
+  if(b.dataset.act==='stop')kidStop();else kidStart(b.dataset.act);
+});
 $('#boardClose').onclick=()=>{$('#board').hidden=true;stopVO();};
 
 
@@ -3395,6 +3457,8 @@ function floatDom(el,text,col){
 }
 // 睡前总结：今日小明星、乖宝宝奖
 function daySummary(){
+  // 一天只结算一次（宝宝中途叫醒再睡也不会重复发）
+  if(state.sumDay===state.day)return;state.sumDay=state.day;
   const ks=kids();
   for(const k of ks)if(!k.warns){k.score=(k.score??3)+1;k.today=(k.today||0)+1;}
   const best=Math.max(0,...ks.map(k=>k.today||0)),tops=ks.filter(k=>(k.today||0)===best&&best>=2);
@@ -3601,7 +3665,7 @@ function startMatch(ph){
     if(k.h)getOff(k);b.subOf=room;b.team=team;k.acc=k.acc||{};b.prevBody=k.acc.body||null;k.acc.body='jersey_'+team;
     b.task={act:'watch',room,spot:benchSpot(room,team,team==='red'?nr-1:nb-1)};b.taskDone=false;b.rewarded=true;});
   MATCH.nextSub=nowS()+60;
-  render();
+  render();drawScore();
 }
 const BENCH={red:[[52,520],[52,830],[52,880]],blue:[[1548,520],[1548,830],[1548,880]]};
 const matchSeg=()=>MATCH&&!MATCH.done?roomIdx(MATCH.room):-1;
