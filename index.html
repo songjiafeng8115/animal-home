@@ -2446,7 +2446,8 @@ Object.assign(TH,{
 /* ================= 世界：镜头、拖动画面换房间 ================= */
 function computeView(){
   const r=stage.getBoundingClientRect();if(!r.width||!r.height)return;
-  viewW=clamp(900*r.width/r.height,1000,3200);clampCam();applyCam();
+  viewW=clamp(900*r.width/r.height,SEG,3200); // 至少放得下一整个场景
+  clampCam();applyCam();
 }
 function clampCam(){camX=clamp(camX,0,Math.max(0,WORLD_W()-viewW));}
 function applyCam(){stage.setAttribute('viewBox',`${r1(camX)} 0 ${r1(viewW)} 900`);updateRoomFromCam();updateNav();}
@@ -2462,6 +2463,11 @@ function goRoom(id,instant){
 }
 function camMoved(){if(tbOpen){tbOpen=false;placeToolbar();}}
 function camSettled(){
+  // 离某个场景很近就自动对正，让它完整显示；停在两个场景正中间就不动
+  if(!story&&!pan&&camTarget==null){
+    const i=Math.round((camX+viewW/2-SEG/2)/SEG),tgt=clamp(i*SEG+SEG/2-viewW/2,0,Math.max(0,WORLD_W()-viewW));
+    if(Math.abs(tgt-camX)>1&&Math.abs(tgt-camX)<SEG*.3){camTarget=tgt;return;}
+  }
   save();paintWrap();
   if(!story&&state.room!==roomSpoken&&welcomed){roomSpoken=state.room;talk(['rm_'+state.room]);}
 }
